@@ -1,0 +1,36 @@
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ..database import Base
+
+
+class GoogleOAuthCredentials(Base):
+    """Ein Token pro User (der koenigswege-Account). Refresh- und Access-Token
+    Fernet-verschluesselt at-rest. Muster 1:1 aus financeandcoffee-shop."""
+
+    __tablename__ = "google_oauth_credentials"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    scopes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    refresh_token_enc: Mapped[str] = mapped_column(Text, nullable=False)
+    access_token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    access_token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    google_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    user = relationship("User", back_populates="credentials")

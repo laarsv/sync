@@ -1,0 +1,26 @@
+name: sync-prod
+
+services:
+  backend:
+    build: ./backend
+    container_name: sync-api
+    expose:
+      - "8000"
+    volumes:
+      - /opt/appdata/sync/data:/app/data
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - proxy
+
+  frontend:
+    build: ./frontend
+    container_name: sync-web
+    restart: unless-stopped
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

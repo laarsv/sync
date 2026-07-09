@@ -1,0 +1,20 @@
+# In das zentrale Caddyfile auf dem Host einfuegen (/opt/appdata/caddy/Caddyfile),
+# dann Caddy neu laden. Caddy laeuft im externen Docker-Netz "proxy" und spricht
+# die Container ueber ihren EXPLIZITEN container_name an - NICHT ueber generische
+# Aliase wie "backend"/"frontend" (Routing-Bug-Falle im geteilten proxy-Netz!).
+
+sync.vrwb.de {
+    encode zstd gzip
+
+    handle /api/* {
+        reverse_proxy sync-api:8000
+    }
+
+    handle {
+        reverse_proxy sync-web:80
+    }
+}
+
+# Reload nach dem Einfuegen:
+#   docker compose -f /opt/appdata/caddy/docker-compose.yml exec caddy \
+#     caddy reload --config /etc/caddy/Caddyfile
