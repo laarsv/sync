@@ -265,8 +265,15 @@ async def _sync_source(
     db: Session, token: str, user: User, source_cal: str, pairs: List[SyncPair]
 ) -> Dict[int, Counter]:
     """Liest die Quelle EINMAL und verteilt die Aenderungen an alle Paare, die
-    diese Quelle nutzen."""
+    diese Quelle nutzen.
+
+    WICHTIG (SQLite-Locking): waehrend der langsamen Google-Aufrufe darf KEINE
+    Schreib-Transaktion offen gehalten werden - sonst laufen parallele Requests
+    in "database is locked". Darum wird nach jedem Quell-Event committet (kurzes
+    Lock-Fenster), nie ueber die Netzwerk-Calls hinweg.
+    """
     state = get_state(db, user.id, source_cal)
+    db.commit()  # evtl. neu angelegten State schreiben + Lock sofort freigeben
     items, new_token, was_full = await _fetch_changes(token, source_cal, state)
 
     counters: Dict[int, Counter] = {p.id: Counter() for p in pairs}
@@ -277,65 +284,105 @@ async def _sync_source(
         cancelled = ev.get("status") == "cancelled"
         for p in pairs:
             await _apply(db, token, p, ev, cancelled, counters[p.id])
+        db.commit()  # Schreibsperre nach jedem Quell-Event freigeben
 
     now = _utcnow()
+    state = get_state(db, user.id, source_cal)
     state.sync_token = new_token
     if was_full:
         state.last_full_sync_at = now
     state.last_delta_at = now
-    db.flush()
+    db.commit()
     return counters
 
 
+def _write_run(
+    db: Session,
+    user: User,
+    trigger: str,
+    started: datetime,
+    total: Counter,
+    ok: bool,
+    error: Optional[str],
+) -> None:
+    """Lauf-Log am ENDE schreiben (eine kurze Transaktion) - nicht am Anfang,
+    sonst haelt die frueh angelegte Zeile die Schreibsperre ueber den ganzen
+    Lauf offen."""
+    db.add(
+        SyncRun(
+            user_id=user.id,
+            trigger=trigger,
+            started_at=started,
+            finished_at=_utcnow(),
+            created=total.created,
+            updated=total.updated,
+            deleted=total.deleted,
+            ok=ok,
+            error=error,
+        )
+    )
+    db.commit()
+
+
 async def sync_user(db: Session, user: User, trigger: str = "poll") -> Counter:
-    """Ein vollstaendiger Sync-Durchlauf fuer einen User (alle aktiven Paare)."""
-    run = SyncRun(user_id=user.id, trigger=trigger, started_at=_utcnow())
-    db.add(run)
-    db.flush()
+    """Ein vollstaendiger Sync-Durchlauf fuer einen User (alle aktiven Paare).
+
+    Haelt die SQLite-Schreibsperre bewusst kurz (commit pro Quell-Event, Lauf-Log
+    erst am Ende), damit parallele API-Requests nicht auf "database is locked"
+    laufen.
+    """
+    started = _utcnow()
     total = Counter()
 
     try:
         token = await gcal.get_valid_access_token(db, user)
     except gcal.CalendarAuthError as exc:
-        # Nicht verbunden / Token nicht entschluesselbar / widerrufen.
-        run.ok = False
-        run.error = "not_connected" if isinstance(exc, gcal.CalendarNotConnectedError) else str(exc)[:200]
-        run.finished_at = _utcnow()
-        db.flush()
+        db.rollback()
+        _write_run(
+            db,
+            user,
+            trigger,
+            started,
+            total,
+            ok=False,
+            error="not_connected"
+            if isinstance(exc, gcal.CalendarNotConnectedError)
+            else str(exc)[:200],
+        )
         return total
 
-    pairs = (
-        db.query(SyncPair).filter_by(owner_user_id=user.id, active=True).all()
-    )
+    pairs = db.query(SyncPair).filter_by(owner_user_id=user.id, active=True).all()
     by_source: Dict[str, List[SyncPair]] = defaultdict(list)
     for p in pairs:
         by_source[p.source_calendar_id].append(p)
 
+    ok = True
+    error_msg = ""
     for source_cal, group in by_source.items():
+        group_ids = [p.id for p in group]
         try:
             counters = await _sync_source(db, token, user, source_cal, group)
             for p in group:
-                c = counters[p.id]
                 p.last_run_at = _utcnow()
                 p.last_status = "ok"
                 p.last_error = None
-                total.add(c)
+                total.add(counters[p.id])
+            db.commit()
         except Exception as exc:  # noqa: BLE001 - eine kaputte Quelle darf die
             # anderen nicht abbrechen (API-, Netzwerk- oder sonstiger Fehler).
-            for p in group:
-                p.last_run_at = _utcnow()
-                p.last_status = "error"
-                p.last_error = str(exc)[:500]
-            run.ok = False
-            run.error = (run.error or "") + f"[{source_cal}] {exc}; "
+            db.rollback()
+            for pid in group_ids:
+                p = db.get(SyncPair, pid)
+                if p is not None:
+                    p.last_run_at = _utcnow()
+                    p.last_status = "error"
+                    p.last_error = str(exc)[:500]
+            db.commit()
+            ok = False
+            error_msg += f"[{source_cal}] {exc}; "
             logger.warning("Sync-Fehler fuer Quelle %s: %s", source_cal, exc)
-        db.flush()
 
-    run.finished_at = _utcnow()
-    run.created = total.created
-    run.updated = total.updated
-    run.deleted = total.deleted
-    db.flush()
+    _write_run(db, user, trigger, started, total, ok=ok, error=error_msg or None)
     return total
 
 

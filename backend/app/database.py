@@ -50,13 +50,23 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):  # pragma: no cover
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA busy_timeout=5000")
+        # Grosszuegig warten statt sofort "database is locked" - der Sync und
+        # interaktive Requests teilen sich eine SQLite-Datei.
+        cursor.execute("PRAGMA busy_timeout=30000")
         cursor.close()
     except Exception:
         pass
 
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, future=True)
+# expire_on_commit=False: bei haeufigen Commits (Sync committet pro Event) sollen
+# ORM-Objekte ihre Werte behalten, statt bei jedem Zugriff neu zu laden.
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+    bind=engine,
+    future=True,
+)
 
 
 class Base(DeclarativeBase):
