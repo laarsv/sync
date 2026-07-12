@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,6 +10,7 @@ from ..models import SyncPair, User
 from ..schemas import PairIn, PairOut, PairUpdate, SyncSummaryOut
 from ..services import sync_engine
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/pairs", tags=["pairs"])
 
 
@@ -20,10 +22,13 @@ def _get_owned_pair(db: Session, user: User, pair_id: int) -> SyncPair:
 
 
 async def _try_token(db: Session, user: User) -> Optional[str]:
-    """Access-Token holen, aber ohne Hard-Fail (fuer Best-effort-Cleanup)."""
+    """Access-Token holen, aber ohne Hard-Fail (fuer Best-effort-Reconcile).
+    Faengt bewusst breit (auch Netzwerkfehler) - der Aufrufer soll dadurch nie
+    500en."""
     try:
         return await gcal.get_valid_access_token(db, user)
-    except gcal.CalendarAuthError:
+    except Exception:  # noqa: BLE001
+        logger.info("Token-Abruf fuer Best-effort-Reconcile fehlgeschlagen", exc_info=True)
         return None
 
 
@@ -118,25 +123,39 @@ async def update_pair(
     deactivating = old["active"] and not pair.active
     activating = not old["active"] and pair.active
 
-    # Cleanup (delete + neu anlegen) nur bei Quell-/Ziel-Wechsel, Detailstufen-
-    # Wechsel oder Deaktivieren - sonst blieben alte Details als Rest im Mirror
-    # haengen. Laeuft auf dem ALTEN Ziel.
-    if moved or detail_changed or deactivating:
-        token = await _try_token(db, current_user)
-        if token is not None:
-            await sync_engine.cleanup_pair(
-                db, token, pair, target_calendar_id=old["target"]
-            )
-
-    # Re-Sync erzwingen, damit Aenderungen sofort greifen - inkl. reiner Titel-/
-    # Praefix-Aenderungen, die bestehende Mirrors nur re-patchen.
+    # Re-Sync erzwingen (reine DB-Aenderung), damit Aenderungen beim naechsten
+    # Lauf greifen - inkl. reiner Titel-/Praefix-/Sichtbarkeits-Aenderungen, die
+    # bestehende Mirrors nur re-patchen.
     if pair.active and (moved or detail_changed or content_changed or activating):
         sync_engine.reset_source_state(db, current_user.id, pair.source_calendar_id)
         if old["source"] != pair.source_calendar_id:
             sync_engine.reset_source_state(db, current_user.id, old["source"])
 
+    # Den Edit ZUERST festschreiben - unabhaengig von der Google-Reconcile.
     db.commit()
-    return PairOut.model_validate(pair)
+    result = PairOut.model_validate(pair)
+
+    # Google-Reconcile ist best-effort: alte Mirrors auf dem ALTEN Ziel loeschen,
+    # wenn Quelle/Ziel/Detailstufe wechselt oder deaktiviert wird (sonst blieben
+    # alte Details als Rest haengen). Schlaegt das fehl (Google-API-Fehler o.ae.),
+    # bleibt der Edit trotzdem gespeichert und der naechste Sync raeumt auf -
+    # kein 500.
+    if moved or detail_changed or deactivating:
+        try:
+            token = await _try_token(db, current_user)
+            if token is not None:
+                await sync_engine.cleanup_pair(
+                    db, token, pair, target_calendar_id=old["target"]
+                )
+                db.commit()
+        except Exception:  # noqa: BLE001
+            db.rollback()
+            logger.warning(
+                "Reconcile nach Paar-Update fehlgeschlagen (best-effort)",
+                exc_info=True,
+            )
+
+    return result
 
 
 @router.delete("/{pair_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -146,9 +165,16 @@ async def delete_pair(
     current_user: User = Depends(get_current_user),
 ):
     pair = _get_owned_pair(db, current_user, pair_id)
-    token = await _try_token(db, current_user)
-    if token is not None:
-        await sync_engine.cleanup_pair(db, token, pair)
+    # Best-effort: gespiegelte Ziel-Events entfernen, bevor das Paar (und via
+    # Cascade seine Mappings) geloescht wird. Fehler hier duerfen das Loeschen
+    # nicht verhindern.
+    try:
+        token = await _try_token(db, current_user)
+        if token is not None:
+            await sync_engine.cleanup_pair(db, token, pair)
+    except Exception:  # noqa: BLE001
+        db.rollback()
+        logger.warning("Cleanup beim Loeschen fehlgeschlagen (best-effort)", exc_info=True)
     db.delete(pair)
     db.commit()
     return None

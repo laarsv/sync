@@ -296,9 +296,10 @@ async def sync_user(db: Session, user: User, trigger: str = "poll") -> Counter:
 
     try:
         token = await gcal.get_valid_access_token(db, user)
-    except gcal.CalendarNotConnectedError:
+    except gcal.CalendarAuthError as exc:
+        # Nicht verbunden / Token nicht entschluesselbar / widerrufen.
         run.ok = False
-        run.error = "not_connected"
+        run.error = "not_connected" if isinstance(exc, gcal.CalendarNotConnectedError) else str(exc)[:200]
         run.finished_at = _utcnow()
         db.flush()
         return total
@@ -319,7 +320,8 @@ async def sync_user(db: Session, user: User, trigger: str = "poll") -> Counter:
                 p.last_status = "ok"
                 p.last_error = None
                 total.add(c)
-        except (svc.CalendarApiError, gcal.CalendarAuthError) as exc:
+        except Exception as exc:  # noqa: BLE001 - eine kaputte Quelle darf die
+            # anderen nicht abbrechen (API-, Netzwerk- oder sonstiger Fehler).
             for p in group:
                 p.last_run_at = _utcnow()
                 p.last_status = "error"
