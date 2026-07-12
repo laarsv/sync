@@ -201,10 +201,10 @@ async def sync_now(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="calendar_not_connected"
         )
-    # Nur ein manueller Lauf pro User gleichzeitig (check + mark ohne await = atomar).
-    if sync_engine.is_sync_running(current_user.id):
+    # Advisory-Check: verhindert unnoetiges Spawnen. Die eigentliche Absicherung
+    # (ein Lauf pro User, auch ueber mehrere Worker) ist der DB-Lock im Task.
+    if sync_engine.is_sync_running(db, current_user.id):
         return SyncStartOut(status="running")
-    sync_engine.mark_sync_running(current_user.id)
     background.add_task(sync_engine.background_sync_user, current_user.id)
     return SyncStartOut(status="started")
 
@@ -220,6 +220,6 @@ def sync_status(
         .first()
     )
     return SyncStatusOut(
-        running=sync_engine.is_sync_running(current_user.id),
+        running=sync_engine.is_sync_running(db, current_user.id),
         last_run=SyncRunOut.model_validate(last) if last else None,
     )

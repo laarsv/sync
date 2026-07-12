@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..config import settings
@@ -34,6 +35,7 @@ from ..models import (
     CalendarSyncState,
     EventMapping,
     GoogleOAuthCredentials,
+    SyncLock,
     SyncPair,
     SyncRun,
     User,
@@ -416,8 +418,74 @@ async def cleanup_pair(
     return n
 
 
+# ---------- DB-gestuetzter Lauf-Lock (ein Sync pro User, ueber Prozesse hinweg) ----------
+# Stale-Schwelle: laenger gehaltene Locks gelten als verwaist (Prozess-Crash) und
+# duerfen uebernommen werden. Grosszuegig, damit ein langer Erst-Sync nicht
+# faelschlich doppelt startet.
+_LOCK_STALE = timedelta(minutes=30)
+
+
+def _lock_is_stale(lock: SyncLock) -> bool:
+    return (_utcnow() - lock.locked_at) > _LOCK_STALE
+
+
+def is_sync_running(db: Session, user_id: int) -> bool:
+    lock = db.get(SyncLock, user_id)
+    return lock is not None and not _lock_is_stale(lock)
+
+
+def acquire_sync_lock(db: Session, user_id: int, trigger: str) -> bool:
+    """Atomar (SQLite serialisiert Writes): True, wenn dieser Prozess den Lock
+    bekommt. Verwaiste Locks werden uebernommen."""
+    now = _utcnow()
+    lock = db.get(SyncLock, user_id)
+    if lock is not None:
+        if not _lock_is_stale(lock):
+            return False
+        lock.locked_at = now
+        lock.trigger = trigger
+        try:
+            db.commit()
+            return True
+        except Exception:  # noqa: BLE001
+            db.rollback()
+            return False
+    try:
+        db.add(SyncLock(user_id=user_id, trigger=trigger, locked_at=now))
+        db.commit()
+        return True
+    except IntegrityError:
+        # Anderer Prozess war zwischen get und insert schneller.
+        db.rollback()
+        return False
+
+
+def release_sync_lock(db: Session, user_id: int) -> None:
+    lock = db.get(SyncLock, user_id)
+    if lock is not None:
+        db.delete(lock)
+        try:
+            db.commit()
+        except Exception:  # noqa: BLE001
+            db.rollback()
+
+
+async def run_sync_with_lock(db: Session, user: User, trigger: str) -> bool:
+    """Erwirbt den DB-Lock und synct. False, wenn bereits ein Lauf aktiv ist.
+    Der Lock wird am Ende immer freigegeben."""
+    if not acquire_sync_lock(db, user.id, trigger):
+        logger.info("Sync fuer user %s uebersprungen - laeuft bereits", user.id)
+        return False
+    try:
+        await sync_user(db, user, trigger=trigger)
+        return True
+    finally:
+        release_sync_lock(db, user.id)
+
+
 async def scheduled_sync(session_factory) -> None:
-    """Scheduler-Einstieg: synchronisiert jeden User mit hinterlegten Credentials."""
+    """Scheduler-Einstieg: synchronisiert jeden User mit hinterlegten Credentials.
+    Ueber den DB-Lock harmlos, falls mehrere Worker gleichzeitig pollen."""
     db = session_factory()
     try:
         user_ids = [row[0] for row in db.query(GoogleOAuthCredentials.user_id).all()]
@@ -426,39 +494,23 @@ async def scheduled_sync(session_factory) -> None:
             if user is None:
                 continue
             try:
-                await sync_user(db, user, trigger="poll")
-                db.commit()
+                await run_sync_with_lock(db, user, trigger="poll")
             except Exception:  # noqa: BLE001
                 db.rollback()
-                logger.exception("scheduled sync_user fehlgeschlagen fuer user %s", uid)
+                logger.exception("scheduled sync fehlgeschlagen fuer user %s", uid)
     finally:
         db.close()
 
 
-# ---------- Manueller Hintergrund-Sync ----------
-# Prozess-lokaler Guard: welche User haben gerade einen manuellen Sync laufen.
-# Single-Worker-uvicorn -> in-memory reicht.
-_running_users: set[int] = set()
-
-
-def is_sync_running(user_id: int) -> bool:
-    return user_id in _running_users
-
-
-def mark_sync_running(user_id: int) -> None:
-    _running_users.add(user_id)
-
-
 async def background_sync_user(user_id: int) -> None:
-    """Laeuft als FastAPI-BackgroundTask nach der Response - eigener DB-Session,
-    raeumt den Guard am Ende immer auf."""
+    """FastAPI-BackgroundTask nach der Response - eigene DB-Session, eigener
+    Lock (no-op, falls parallel schon einer laeuft)."""
     db = SessionLocal()
     try:
         user = db.get(User, user_id)
         if user is not None:
-            await sync_user(db, user, trigger="manual")
+            await run_sync_with_lock(db, user, trigger="manual")
     except Exception:  # noqa: BLE001
         logger.exception("Hintergrund-Sync fehlgeschlagen fuer user %s", user_id)
     finally:
         db.close()
-        _running_users.discard(user_id)
