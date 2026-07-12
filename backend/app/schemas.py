@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 
 # ---------- Auth ----------
@@ -95,6 +95,16 @@ class PairOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @field_serializer("last_run_at", "created_at")
+    def _serialize_utc(self, dt: Optional[datetime]) -> Optional[str]:
+        # Gespeichert wird naive UTC. Ohne explizite Kennung liest der Browser
+        # den Zeitstempel als Lokalzeit -> 2h Versatz (CEST). Als UTC ausweisen.
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
 
 
 class SyncSummaryOut(BaseModel):
