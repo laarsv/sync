@@ -28,6 +28,7 @@ from typing import Dict, List, Optional, Tuple
 from sqlalchemy.orm import Session
 
 from ..config import settings
+from ..database import SessionLocal
 from ..auth import google_calendar as gcal
 from ..models import (
     CalendarSyncState,
@@ -432,3 +433,32 @@ async def scheduled_sync(session_factory) -> None:
                 logger.exception("scheduled sync_user fehlgeschlagen fuer user %s", uid)
     finally:
         db.close()
+
+
+# ---------- Manueller Hintergrund-Sync ----------
+# Prozess-lokaler Guard: welche User haben gerade einen manuellen Sync laufen.
+# Single-Worker-uvicorn -> in-memory reicht.
+_running_users: set[int] = set()
+
+
+def is_sync_running(user_id: int) -> bool:
+    return user_id in _running_users
+
+
+def mark_sync_running(user_id: int) -> None:
+    _running_users.add(user_id)
+
+
+async def background_sync_user(user_id: int) -> None:
+    """Laeuft als FastAPI-BackgroundTask nach der Response - eigener DB-Session,
+    raeumt den Guard am Ende immer auf."""
+    db = SessionLocal()
+    try:
+        user = db.get(User, user_id)
+        if user is not None:
+            await sync_user(db, user, trigger="manual")
+    except Exception:  # noqa: BLE001
+        logger.exception("Hintergrund-Sync fehlgeschlagen fuer user %s", user_id)
+    finally:
+        db.close()
+        _running_users.discard(user_id)

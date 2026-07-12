@@ -1,13 +1,20 @@
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ..auth import google_calendar as gcal
 from ..deps import get_current_user, get_db
-from ..models import SyncPair, User
-from ..schemas import PairIn, PairOut, PairUpdate, SyncSummaryOut
+from ..models import SyncPair, SyncRun, User
+from ..schemas import (
+    PairIn,
+    PairOut,
+    PairUpdate,
+    SyncRunOut,
+    SyncStartOut,
+    SyncStatusOut,
+)
 from ..services import sync_engine
 
 logger = logging.getLogger(__name__)
@@ -180,17 +187,39 @@ async def delete_pair(
     return None
 
 
-@router.post("/sync-now", response_model=SyncSummaryOut)
+@router.post(
+    "/sync-now", response_model=SyncStartOut, status_code=status.HTTP_202_ACCEPTED
+)
 async def sync_now(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
-) -> SyncSummaryOut:
-    try:
-        counter = await sync_engine.sync_user(db, current_user, trigger="manual")
-    except gcal.CalendarNotConnectedError as exc:
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> SyncStartOut:
+    """Startet den Sync als Hintergrund-Task und kehrt sofort zurueck. Den
+    Fortschritt/das Ergebnis holt das Frontend ueber GET /sync-status."""
+    if not gcal.is_connected(db, current_user):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="calendar_not_connected"
-        ) from exc
-    db.commit()
-    return SyncSummaryOut(
-        created=counter.created, updated=counter.updated, deleted=counter.deleted
+        )
+    # Nur ein manueller Lauf pro User gleichzeitig (check + mark ohne await = atomar).
+    if sync_engine.is_sync_running(current_user.id):
+        return SyncStartOut(status="running")
+    sync_engine.mark_sync_running(current_user.id)
+    background.add_task(sync_engine.background_sync_user, current_user.id)
+    return SyncStartOut(status="started")
+
+
+@router.get("/sync-status", response_model=SyncStatusOut)
+def sync_status(
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+) -> SyncStatusOut:
+    last = (
+        db.query(SyncRun)
+        .filter_by(user_id=current_user.id)
+        .order_by(SyncRun.id.desc())
+        .first()
+    )
+    return SyncStatusOut(
+        running=sync_engine.is_sync_running(current_user.id),
+        last_run=SyncRunOut.model_validate(last) if last else None,
     )

@@ -117,3 +117,38 @@ class SyncSummaryOut(BaseModel):
     created: int
     updated: int
     deleted: int
+
+
+def _utc_iso(dt: Optional[datetime]) -> Optional[str]:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+
+class SyncStartOut(BaseModel):
+    # "started" = neuer Hintergrund-Sync gestartet; "running" = lief schon.
+    status: str
+
+
+class SyncRunOut(BaseModel):
+    trigger: str
+    started_at: datetime
+    finished_at: Optional[datetime] = None
+    created: int
+    updated: int
+    deleted: int
+    ok: bool
+    error: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+    @field_serializer("started_at", "finished_at")
+    def _ser_dt(self, dt: Optional[datetime]) -> Optional[str]:
+        return _utc_iso(dt)
+
+
+class SyncStatusOut(BaseModel):
+    running: bool
+    last_run: Optional[SyncRunOut] = None

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import Spinner from '../components/ui/Spinner'
@@ -39,6 +39,8 @@ export default function PairsPage() {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
   const [syncing, setSyncing] = useState(false)
+  const pollTimer = useRef(null)
+  const mountedRef = useRef(true)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null) // pair or null
@@ -76,7 +78,21 @@ export default function PairsPage() {
   }, [])
 
   useEffect(() => {
+    mountedRef.current = true
     load()
+    // Laeuft schon ein (Hintergrund-)Sync? -> Status pollen.
+    fetchSyncStatus()
+      .then((st) => {
+        if (mountedRef.current && st?.running) {
+          setSyncing(true)
+          scheduleNextPoll(false)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      mountedRef.current = false
+      if (pollTimer.current) clearTimeout(pollTimer.current)
+    }
   }, [load])
 
   const sourceOptions = useMemo(
@@ -178,24 +194,63 @@ export default function PairsPage() {
     }
   }
 
-  async function runSync(silent = false) {
-    setSyncing(true)
-    if (!silent) setNotice(null)
+  function fetchSyncStatus() {
+    return api.get('/pairs/sync-status')
+  }
+
+  function scheduleNextPoll(announce) {
+    if (pollTimer.current) clearTimeout(pollTimer.current)
+    pollTimer.current = setTimeout(() => pollOnce(announce), 2000)
+  }
+
+  async function pollOnce(announce) {
+    let st
     try {
-      const r = await api.post('/pairs/sync-now')
-      setNotice(
-        `Sync fertig · ${r.created} erstellt, ${r.updated} aktualisiert, ${r.deleted} gelöscht.`,
-      )
-      await load()
+      st = await fetchSyncStatus()
+    } catch {
+      if (mountedRef.current) setSyncing(false)
+      return
+    }
+    if (!mountedRef.current) return
+    if (st.running) {
+      setSyncing(true)
+      scheduleNextPoll(announce)
+      return
+    }
+    // Fertig.
+    setSyncing(false)
+    if (announce && st.last_run) {
+      const r = st.last_run
+      if (r.ok) {
+        setNotice(
+          `Sync fertig · ${r.created} erstellt, ${r.updated} aktualisiert, ${r.deleted} gelöscht.`,
+        )
+      } else {
+        setError('Sync mit Fehlern abgeschlossen — Details am jeweiligen Paar.')
+      }
+    }
+    await load()
+  }
+
+  async function runSync(silent = false) {
+    if (!silent) {
+      setNotice(null)
+      setError(null)
+    }
+    setSyncing(true)
+    try {
+      // Startet den Sync im Hintergrund und kehrt sofort zurueck.
+      await api.post('/pairs/sync-now')
     } catch (e) {
+      setSyncing(false)
       if (e instanceof ApiError && e.status === 409) {
         setError('Kein Kalender verbunden.')
       } else {
         setError(e.message)
       }
-    } finally {
-      setSyncing(false)
+      return
     }
+    scheduleNextPoll(true)
   }
 
   if (!pairs || !status) {
@@ -232,7 +287,7 @@ export default function PairsPage() {
             onClick={() => runSync(false)}
           >
             <Refresh className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-            Jetzt synchronisieren
+            {syncing ? 'Synchronisiert…' : 'Jetzt synchronisieren'}
           </button>
           <button className="btn-primary btn-sm" disabled={!connected} onClick={openNew}>
             <Plus className="h-4 w-4" />
