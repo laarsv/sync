@@ -27,6 +27,9 @@ class SyncPair(Base):
     # "busy" = generischer Zeitblock ohne Details; "full" = Titel/Ort/Beschreibung.
     detail_level: Mapped[str] = mapped_column(String(16), nullable=False, default="busy")
     busy_title: Mapped[str] = mapped_column(String(255), nullable=False, default="Belegt")
+    # Frei waehlbares Praefix vor jedem gespiegelten Titel, z.B. "(P)" -> zeigt
+    # die Herkunft im Ziel-Kalender an. Leer = kein Praefix.
+    title_prefix: Mapped[str] = mapped_column(String(32), nullable=False, default="")
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

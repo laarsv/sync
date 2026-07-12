@@ -59,6 +59,7 @@ def create_pair(
         target_calendar_label=payload.target_calendar_label,
         detail_level=payload.detail_level,
         busy_title=payload.busy_title or "Belegt",
+        title_prefix=(payload.title_prefix or "").strip(),
         active=payload.active,
     )
     db.add(pair)
@@ -79,10 +80,18 @@ async def update_pair(
     current_user: User = Depends(get_current_user),
 ) -> PairOut:
     pair = _get_owned_pair(db, current_user, pair_id)
-    old_target = pair.target_calendar_id
-    old_source = pair.source_calendar_id
+    old = {
+        "source": pair.source_calendar_id,
+        "target": pair.target_calendar_id,
+        "detail_level": pair.detail_level,
+        "busy_title": pair.busy_title,
+        "title_prefix": pair.title_prefix,
+        "active": pair.active,
+    }
 
     data = payload.model_dump(exclude_unset=True)
+    if data.get("title_prefix") is not None:
+        data["title_prefix"] = data["title_prefix"].strip()
     new_source = data.get("source_calendar_id", pair.source_calendar_id)
     new_target = data.get("target_calendar_id", pair.target_calendar_id)
     if new_source == new_target:
@@ -91,33 +100,36 @@ async def update_pair(
             detail="Quelle und Ziel duerfen nicht identisch sein.",
         )
 
-    structural = any(
-        k in data for k in ("source_calendar_id", "target_calendar_id", "detail_level")
-    )
-    deactivating = data.get("active") is False and pair.active
-    activating = data.get("active") is True and not pair.active
-
     for k, v in data.items():
         setattr(pair, k, v)
-    if pair.busy_title == "":
+    if not pair.busy_title:
         pair.busy_title = "Belegt"
     db.flush()
 
-    # Reconcile bestehende Spiegel-Events, wenn sich Struktur aendert oder das
-    # Paar deaktiviert wird. Cleanup laeuft auf dem ALTEN Ziel.
-    if structural or deactivating:
+    moved = pair.source_calendar_id != old["source"] or pair.target_calendar_id != old["target"]
+    detail_changed = pair.detail_level != old["detail_level"]
+    content_changed = (
+        pair.busy_title != old["busy_title"] or pair.title_prefix != old["title_prefix"]
+    )
+    deactivating = old["active"] and not pair.active
+    activating = not old["active"] and pair.active
+
+    # Cleanup (delete + neu anlegen) nur bei Quell-/Ziel-Wechsel, Detailstufen-
+    # Wechsel oder Deaktivieren - sonst blieben alte Details als Rest im Mirror
+    # haengen. Laeuft auf dem ALTEN Ziel.
+    if moved or detail_changed or deactivating:
         token = await _try_token(db, current_user)
         if token is not None:
             await sync_engine.cleanup_pair(
-                db, token, pair, target_calendar_id=old_target
+                db, token, pair, target_calendar_id=old["target"]
             )
 
-    # Bei aktivem Paar + Strukturaenderung/Reaktivierung Full-Sync erzwingen,
-    # damit neu/erneut gespiegelt wird.
-    if pair.active and (structural or activating):
+    # Re-Sync erzwingen, damit Aenderungen sofort greifen - inkl. reiner Titel-/
+    # Praefix-Aenderungen, die bestehende Mirrors nur re-patchen.
+    if pair.active and (moved or detail_changed or content_changed or activating):
         sync_engine.reset_source_state(db, current_user.id, pair.source_calendar_id)
-        if old_source != pair.source_calendar_id:
-            sync_engine.reset_source_state(db, current_user.id, old_source)
+        if old["source"] != pair.source_calendar_id:
+            sync_engine.reset_source_state(db, current_user.id, old["source"])
 
     db.commit()
     return PairOut.model_validate(pair)

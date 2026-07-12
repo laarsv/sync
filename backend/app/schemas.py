@@ -53,6 +53,7 @@ class PairIn(BaseModel):
     target_calendar_label: Optional[str] = None
     detail_level: str = "busy"
     busy_title: str = "Belegt"
+    title_prefix: str = Field(default="", max_length=32)
     active: bool = True
 
     @field_validator("detail_level")
@@ -70,6 +71,7 @@ class PairUpdate(BaseModel):
     target_calendar_label: Optional[str] = None
     detail_level: Optional[str] = None
     busy_title: Optional[str] = None
+    title_prefix: Optional[str] = Field(default=None, max_length=32)
     active: Optional[bool] = None
 
     @field_validator("detail_level")
@@ -88,6 +90,7 @@ class PairOut(BaseModel):
     target_calendar_label: Optional[str] = None
     detail_level: str
     busy_title: str
+    title_prefix: str
     active: bool
     last_run_at: Optional[datetime] = None
     last_status: str

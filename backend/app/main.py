@@ -27,9 +27,28 @@ async def _sync_job() -> None:
         logger.exception("Sync-Job abgestuerzt: %s", exc)
 
 
+def _ensure_schema() -> None:
+    """Idempotente Mini-Migration fuer bestehende SQLite-DBs (kein Alembic).
+    create_all legt fehlende Tabellen an, aber keine neuen Spalten in
+    bestehenden Tabellen - das holen wir hier nach."""
+    if not settings.DATABASE_URL.startswith("sqlite"):
+        return
+    with engine.begin() as conn:
+        cols = [
+            r[1]
+            for r in conn.exec_driver_sql("PRAGMA table_info(sync_pairs)").fetchall()
+        ]
+        if cols and "title_prefix" not in cols:
+            conn.exec_driver_sql(
+                "ALTER TABLE sync_pairs ADD COLUMN title_prefix "
+                "VARCHAR(32) NOT NULL DEFAULT ''"
+            )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    _ensure_schema()
 
     if settings.DEV_LOGIN:
         print(

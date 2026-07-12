@@ -106,14 +106,17 @@ def _build_body(pair: SyncPair, ev: dict) -> dict:
         },
     }
     if pair.detail_level == "full":
-        body["summary"] = ev.get("summary") or (pair.busy_title or "Belegt")
+        base_title = ev.get("summary") or (pair.busy_title or "Belegt")
         if ev.get("description"):
             body["description"] = ev["description"]
         if ev.get("location"):
             body["location"] = ev["location"]
     else:
         # BUSY: generischer Titel, KEINE Details.
-        body["summary"] = pair.busy_title or "Belegt"
+        base_title = pair.busy_title or "Belegt"
+    # Frei waehlbares Herkunfts-Praefix, z.B. "(P) Meeting".
+    prefix = (pair.title_prefix or "").strip()
+    body["summary"] = f"{prefix} {base_title}".strip() if prefix else base_title
     # NIE Teilnehmer spiegeln - ein Mirror traegt keine Gaesteliste.
     return body
 

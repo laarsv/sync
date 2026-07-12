@@ -20,6 +20,7 @@ const EMPTY_FORM = {
   target_calendar_id: '',
   detail_level: 'busy',
   busy_title: 'Belegt',
+  title_prefix: '',
   active: true,
 }
 
@@ -110,6 +111,7 @@ export default function PairsPage() {
       target_calendar_id: pair.target_calendar_id,
       detail_level: pair.detail_level,
       busy_title: pair.busy_title || 'Belegt',
+      title_prefix: pair.title_prefix || '',
       active: pair.active,
     })
     setFormError(null)
@@ -134,6 +136,7 @@ export default function PairsPage() {
       target_calendar_label: calMap[form.target_calendar_id] || null,
       detail_level: form.detail_level,
       busy_title: form.busy_title || 'Belegt',
+      title_prefix: form.title_prefix || '',
       active: form.active,
     }
     try {
@@ -295,6 +298,7 @@ export default function PairsPage() {
                     <Pill tone={pair.detail_level === 'full' ? 'soft' : 'neutral'}>
                       {pair.detail_level === 'full' ? 'Volle Details' : `Busy · „${pair.busy_title}"`}
                     </Pill>
+                    {pair.title_prefix && <Pill tone="soft">Tag „{pair.title_prefix}"</Pill>}
                     <StatusPill pair={pair} />
                     <span className="text-xs text-ink/50">
                       Letzter Lauf: {formatDateTime(pair.last_run_at)}
@@ -389,6 +393,19 @@ export default function PairsPage() {
               />
             </div>
           )}
+          <div>
+            <label className="field-label">Herkunfts-Tag vor dem Titel (optional)</label>
+            <input
+              className="input"
+              value={form.title_prefix}
+              maxLength={32}
+              onChange={(e) => setForm((f) => ({ ...f, title_prefix: e.target.value }))}
+              placeholder="(P)"
+            />
+            <p className="mt-1 text-xs text-ink/60">
+              Wird vor jeden gespiegelten Titel gesetzt, z. B. „(P) Meeting". Leer = kein Tag.
+            </p>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold">Aktiv</span>
             <Toggle
