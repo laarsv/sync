@@ -33,16 +33,22 @@ def _ensure_schema() -> None:
     bestehenden Tabellen - das holen wir hier nach."""
     if not settings.DATABASE_URL.startswith("sqlite"):
         return
+    wanted = {
+        "title_prefix": "VARCHAR(32) NOT NULL DEFAULT ''",
+        "confidential": "BOOLEAN NOT NULL DEFAULT 1",
+    }
     with engine.begin() as conn:
         cols = [
             r[1]
             for r in conn.exec_driver_sql("PRAGMA table_info(sync_pairs)").fetchall()
         ]
-        if cols and "title_prefix" not in cols:
-            conn.exec_driver_sql(
-                "ALTER TABLE sync_pairs ADD COLUMN title_prefix "
-                "VARCHAR(32) NOT NULL DEFAULT ''"
-            )
+        if not cols:
+            return
+        for name, ddl in wanted.items():
+            if name not in cols:
+                conn.exec_driver_sql(
+                    f"ALTER TABLE sync_pairs ADD COLUMN {name} {ddl}"
+                )
 
 
 @asynccontextmanager

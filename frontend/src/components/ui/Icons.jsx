@@ -77,6 +77,12 @@ export const LinkIcon = (p) => (
     <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
   </Svg>
 )
+export const Lock = (p) => (
+  <Svg {...p}>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </Svg>
+)
 export const Help = (p) => (
   <Svg {...p}>
     <circle cx="12" cy="12" r="9" />

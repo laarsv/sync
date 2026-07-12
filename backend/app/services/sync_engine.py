@@ -93,7 +93,9 @@ def _build_body(pair: SyncPair, ev: dict) -> dict:
         "start": _copy_time(ev.get("start")),
         "end": _copy_time(ev.get("end")),
         "transparency": "opaque",
-        "visibility": "private",
+        # "private" -> Eigentuemer sieht Details, andere mit Kalender-Zugriff nur
+        # "Privat"/Belegt. "default" -> richtet sich nach Kalender-Freigabe.
+        "visibility": "private" if pair.confidential else "default",
         # Keine Erinnerungen auf dem Spiegel-Event.
         "reminders": {"useDefault": False, "overrides": []},
         "extendedProperties": {

@@ -60,6 +60,7 @@ def create_pair(
         detail_level=payload.detail_level,
         busy_title=payload.busy_title or "Belegt",
         title_prefix=(payload.title_prefix or "").strip(),
+        confidential=payload.confidential,
         active=payload.active,
     )
     db.add(pair)
@@ -86,6 +87,7 @@ async def update_pair(
         "detail_level": pair.detail_level,
         "busy_title": pair.busy_title,
         "title_prefix": pair.title_prefix,
+        "confidential": pair.confidential,
         "active": pair.active,
     }
 
@@ -109,7 +111,9 @@ async def update_pair(
     moved = pair.source_calendar_id != old["source"] or pair.target_calendar_id != old["target"]
     detail_changed = pair.detail_level != old["detail_level"]
     content_changed = (
-        pair.busy_title != old["busy_title"] or pair.title_prefix != old["title_prefix"]
+        pair.busy_title != old["busy_title"]
+        or pair.title_prefix != old["title_prefix"]
+        or pair.confidential != old["confidential"]
     )
     deactivating = old["active"] and not pair.active
     activating = not old["active"] and pair.active

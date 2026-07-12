@@ -7,7 +7,7 @@ import Toggle from '../components/ui/Toggle'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import EmptyState from '../components/ui/EmptyState'
-import { Arrow, Pencil, Plus, Refresh, Trash } from '../components/ui/Icons'
+import { Arrow, Lock, Pencil, Plus, Refresh, Trash } from '../components/ui/Icons'
 import { formatDateTime, formatInterval } from '../lib/format'
 
 const DETAIL_OPTIONS = [
@@ -21,6 +21,7 @@ const EMPTY_FORM = {
   detail_level: 'busy',
   busy_title: 'Belegt',
   title_prefix: '',
+  confidential: true,
   active: true,
 }
 
@@ -112,6 +113,7 @@ export default function PairsPage() {
       detail_level: pair.detail_level,
       busy_title: pair.busy_title || 'Belegt',
       title_prefix: pair.title_prefix || '',
+      confidential: pair.confidential,
       active: pair.active,
     })
     setFormError(null)
@@ -137,6 +139,7 @@ export default function PairsPage() {
       detail_level: form.detail_level,
       busy_title: form.busy_title || 'Belegt',
       title_prefix: form.title_prefix || '',
+      confidential: form.confidential,
       active: form.active,
     }
     try {
@@ -299,6 +302,15 @@ export default function PairsPage() {
                       {pair.detail_level === 'full' ? 'Volle Details' : `Busy · „${pair.busy_title}"`}
                     </Pill>
                     {pair.title_prefix && <Pill tone="soft">Tag „{pair.title_prefix}"</Pill>}
+                    {pair.confidential && (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs text-ink/50"
+                        title="Vertraulich — nur du siehst Details"
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                        Vertraulich
+                      </span>
+                    )}
                     <StatusPill pair={pair} />
                     <span className="text-xs text-ink/50">
                       Letzter Lauf: {formatDateTime(pair.last_run_at)}
@@ -405,6 +417,19 @@ export default function PairsPage() {
             <p className="mt-1 text-xs text-ink/60">
               Wird vor jeden gespiegelten Titel gesetzt, z. B. „(P) Meeting". Leer = kein Tag.
             </p>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-sm font-bold">Vertraulich</span>
+              <p className="text-xs text-ink/60">
+                Nur du siehst die Details; andere mit Kalender-Zugriff sehen „Privat".
+              </p>
+            </div>
+            <Toggle
+              checked={form.confidential}
+              onChange={(v) => setForm((f) => ({ ...f, confidential: v }))}
+              label="Vertraulich"
+            />
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold">Aktiv</span>

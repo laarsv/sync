@@ -30,6 +30,9 @@ class SyncPair(Base):
     # Frei waehlbares Praefix vor jedem gespiegelten Titel, z.B. "(P)" -> zeigt
     # die Herkunft im Ziel-Kalender an. Leer = kein Praefix.
     title_prefix: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    # True -> Event-Sichtbarkeit "private": Eigentuemer sieht Details, andere mit
+    # Kalender-Zugriff sehen nur "Privat"/Belegt. False -> "default".
+    confidential: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
