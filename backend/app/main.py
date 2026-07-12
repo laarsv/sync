@@ -88,3 +88,12 @@ app.include_router(pairs.router)
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/config")
+def app_config():
+    """Nicht-sensible UI-Konfig (z.B. fuer die Anzeige des Sync-Intervalls)."""
+    return {
+        "poll_interval_minutes": settings.SYNC_POLL_INTERVAL_MINUTES,
+        "backfill_days": settings.SYNC_BACKFILL_DAYS,
+    }

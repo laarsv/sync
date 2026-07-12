@@ -8,7 +8,7 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import EmptyState from '../components/ui/EmptyState'
 import { Arrow, Pencil, Plus, Refresh, Trash } from '../components/ui/Icons'
-import { formatDateTime } from '../lib/format'
+import { formatDateTime, formatInterval } from '../lib/format'
 
 const DETAIL_OPTIONS = [
   { value: 'busy', label: 'Nur belegt (generischer Block)' },
@@ -32,6 +32,7 @@ function StatusPill({ pair }) {
 export default function PairsPage() {
   const [pairs, setPairs] = useState(null)
   const [status, setStatus] = useState(null)
+  const [pollMinutes, setPollMinutes] = useState(null)
   const [calendars, setCalendars] = useState([])
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
@@ -52,9 +53,14 @@ export default function PairsPage() {
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [p, st] = await Promise.all([api.get('/pairs'), api.get('/calendar/status')])
+      const [p, st, cfg] = await Promise.all([
+        api.get('/pairs'),
+        api.get('/calendar/status'),
+        api.get('/config'),
+      ])
       setPairs(p)
       setStatus(st)
+      setPollMinutes(cfg?.poll_interval_minutes ?? null)
       if (st.connected) {
         try {
           setCalendars(await api.get('/calendar/calendars'))
@@ -206,6 +212,12 @@ export default function PairsPage() {
             Ein Paar spiegelt Termine von einem Quell- in einen Ziel-Kalender. Zwei
             Richtungen = zwei Paare.
           </p>
+          {pollMinutes != null && (
+            <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-royal">
+              <Refresh className="h-3.5 w-3.5" />
+              Automatischer Sync {formatInterval(pollMinutes)}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button

@@ -1,3 +1,11 @@
+export function formatInterval(minutes) {
+  if (!minutes || minutes < 1) return 'automatisch'
+  if (minutes === 1) return 'jede Minute'
+  if (minutes === 60) return 'jede Stunde'
+  if (minutes % 60 === 0) return `alle ${minutes / 60} Stunden`
+  return `alle ${minutes} Minuten`
+}
+
 export function formatDateTime(iso) {
   if (!iso) return '—'
   const d = new Date(iso)

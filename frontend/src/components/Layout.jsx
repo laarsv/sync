@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { Burger, Close } from './ui/Icons'
+import { Burger, Close, Help } from './ui/Icons'
+import IntroModal from './IntroModal'
 
 // Eigener Wortmarke-Auftritt in Royal-Blau (kein KW-/Fin.Co-Logo).
 function Wordmark({ className = '' }) {
@@ -35,8 +36,21 @@ export default function Layout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [drawer, setDrawer] = useState(false)
+  const [intro, setIntro] = useState(false)
 
   useEffect(() => setDrawer(false), [location.pathname])
+
+  // Kurzanleitung beim ersten Login automatisch zeigen (pro Nutzer gemerkt).
+  useEffect(() => {
+    if (user && localStorage.getItem(`sync_intro_seen_${user.id}`) !== '1') {
+      setIntro(true)
+    }
+  }, [user])
+
+  function dismissIntro(dontShow) {
+    if (dontShow && user) localStorage.setItem(`sync_intro_seen_${user.id}`, '1')
+    setIntro(false)
+  }
 
   async function onLogout() {
     await logout()
@@ -59,8 +73,16 @@ export default function Layout({ children }) {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
             {user && <span className="text-sm text-ink/60 truncate max-w-[16rem]">{user.email}</span>}
+            <button
+              onClick={() => setIntro(true)}
+              className="p-2 rounded-md hover:bg-royal/10 text-ink/60"
+              aria-label="Kurzanleitung"
+              title="Kurzanleitung"
+            >
+              <Help className="h-5 w-5" />
+            </button>
             <button onClick={onLogout} className="btn-ghost btn-sm">
               Abmelden
             </button>
@@ -112,6 +134,15 @@ export default function Layout({ children }) {
             </nav>
             <div className="border-t border-ink/10 p-2">
               <button
+                onClick={() => {
+                  setDrawer(false)
+                  setIntro(true)
+                }}
+                className="w-full text-left px-4 py-3 text-sm font-bold rounded-md text-ink hover:bg-royal/5"
+              >
+                Kurzanleitung
+              </button>
+              <button
                 onClick={onLogout}
                 className="w-full text-left px-4 py-3 text-sm font-bold rounded-md text-ink hover:bg-royal/5"
               >
@@ -125,6 +156,8 @@ export default function Layout({ children }) {
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10">{children}</div>
       </main>
+
+      {intro && <IntroModal onDismiss={dismissIntro} />}
     </div>
   )
 }
