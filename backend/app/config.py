@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     # Erzwungener Full-Resync-Turnus (rollt das timeMin-Fenster vor, faengt
     # verlorene syncToken-Kontexte ab).
     SYNC_FULL_RESYNC_HOURS: int = 24
+    # Kleine Pause nach jedem Google-Schreibvorgang (ms), um Rate-Limits zu
+    # glaetten. 0 = aus. Bei anhaltendem rateLimitExceeded hochsetzen.
+    SYNC_WRITE_PAUSE_MS: int = 60
 
     # NUR LOKAL: passwortloser Dev-Login (jede @<Domain>-Adresse). Prod: False.
     DEV_LOGIN: bool = False
