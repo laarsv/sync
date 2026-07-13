@@ -36,6 +36,7 @@ def _ensure_schema() -> None:
     wanted = {
         "title_prefix": "VARCHAR(32) NOT NULL DEFAULT ''",
         "confidential": "BOOLEAN NOT NULL DEFAULT 1",
+        "color_id": "VARCHAR(4) NOT NULL DEFAULT ''",
     }
     with engine.begin() as conn:
         cols = [

@@ -137,6 +137,9 @@ def _build_body(pair: SyncPair, ev: dict) -> dict:
     # Frei waehlbares Herkunfts-Praefix, z.B. "(P) Meeting".
     prefix = (pair.title_prefix or "").strip()
     body["summary"] = f"{prefix} {base_title}".strip() if prefix else base_title
+    # Optionale Farbe, damit Spiegel-Events im Ziel-Kalender auffallen.
+    if pair.color_id:
+        body["colorId"] = pair.color_id
     # NIE Teilnehmer spiegeln - ein Mirror traegt keine Gaesteliste.
     return body
 

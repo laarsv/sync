@@ -46,6 +46,10 @@ class CalendarOut(BaseModel):
 # ---------- Sync pairs ----------
 
 
+# Google-Event-colorId: "" (Standard) oder "1".."11".
+_ALLOWED_COLOR_IDS = {""} | {str(i) for i in range(1, 12)}
+
+
 class PairIn(BaseModel):
     source_calendar_id: str
     source_calendar_label: Optional[str] = None
@@ -55,6 +59,7 @@ class PairIn(BaseModel):
     busy_title: str = "Belegt"
     title_prefix: str = Field(default="", max_length=32)
     confidential: bool = True
+    color_id: str = ""
     active: bool = True
 
     @field_validator("detail_level")
@@ -62,6 +67,13 @@ class PairIn(BaseModel):
     def _valid_detail(cls, v: str) -> str:
         if v not in ("busy", "full"):
             raise ValueError("detail_level muss 'busy' oder 'full' sein")
+        return v
+
+    @field_validator("color_id")
+    @classmethod
+    def _valid_color(cls, v: str) -> str:
+        if v not in _ALLOWED_COLOR_IDS:
+            raise ValueError("color_id muss leer oder '1'..'11' sein")
         return v
 
 
@@ -74,6 +86,7 @@ class PairUpdate(BaseModel):
     busy_title: Optional[str] = None
     title_prefix: Optional[str] = Field(default=None, max_length=32)
     confidential: Optional[bool] = None
+    color_id: Optional[str] = None
     active: Optional[bool] = None
 
     @field_validator("detail_level")
@@ -81,6 +94,13 @@ class PairUpdate(BaseModel):
     def _valid_detail(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and v not in ("busy", "full"):
             raise ValueError("detail_level muss 'busy' oder 'full' sein")
+        return v
+
+    @field_validator("color_id")
+    @classmethod
+    def _valid_color(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in _ALLOWED_COLOR_IDS:
+            raise ValueError("color_id muss leer oder '1'..'11' sein")
         return v
 
 
@@ -94,6 +114,7 @@ class PairOut(BaseModel):
     busy_title: str
     title_prefix: str
     confidential: bool
+    color_id: str
     active: bool
     last_run_at: Optional[datetime] = None
     last_status: str

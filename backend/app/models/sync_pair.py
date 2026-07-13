@@ -33,6 +33,8 @@ class SyncPair(Base):
     # True -> Event-Sichtbarkeit "private": Eigentuemer sieht Details, andere mit
     # Kalender-Zugriff sehen nur "Privat"/Belegt. False -> "default".
     confidential: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Google-colorId ("1".."11") fuer gespiegelte Events. Leer = Kalender-Standard.
+    color_id: Mapped[str] = mapped_column(String(4), nullable=False, default="")
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

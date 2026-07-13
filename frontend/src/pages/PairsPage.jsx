@@ -15,6 +15,22 @@ const DETAIL_OPTIONS = [
   { value: 'full', label: 'Volle Details (Titel/Ort/Beschreibung)' },
 ]
 
+// Google-Event-Farben (colorId -> Name/Hex).
+const EVENT_COLORS = [
+  { id: '1', name: 'Lavendel', hex: '#7986cb' },
+  { id: '2', name: 'Salbei', hex: '#33b679' },
+  { id: '3', name: 'Traube', hex: '#8e24aa' },
+  { id: '4', name: 'Flamingo', hex: '#e67c73' },
+  { id: '5', name: 'Banane', hex: '#f6bf26' },
+  { id: '6', name: 'Mandarine', hex: '#f4511e' },
+  { id: '7', name: 'Pfau', hex: '#039be5' },
+  { id: '8', name: 'Graphit', hex: '#616161' },
+  { id: '9', name: 'Blaubeere', hex: '#3f51b5' },
+  { id: '10', name: 'Basilikum', hex: '#0b8043' },
+  { id: '11', name: 'Tomate', hex: '#d50000' },
+]
+const colorHex = (id) => EVENT_COLORS.find((c) => c.id === id)?.hex
+
 const EMPTY_FORM = {
   source_calendar_id: '',
   target_calendar_id: '',
@@ -22,6 +38,7 @@ const EMPTY_FORM = {
   busy_title: 'Belegt',
   title_prefix: '',
   confidential: true,
+  color_id: '',
   active: true,
   create_reverse: false,
 }
@@ -131,6 +148,7 @@ export default function PairsPage() {
       busy_title: pair.busy_title || 'Belegt',
       title_prefix: pair.title_prefix || '',
       confidential: pair.confidential,
+      color_id: pair.color_id || '',
       active: pair.active,
       create_reverse: false,
     })
@@ -158,6 +176,7 @@ export default function PairsPage() {
       busy_title: form.busy_title || 'Belegt',
       title_prefix: form.title_prefix || '',
       confidential: form.confidential,
+      color_id: form.color_id || '',
       active: form.active,
     }
     let reverseNote = null
@@ -374,6 +393,13 @@ export default function PairsPage() {
                     </span>
                   </div>
                   <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    {pair.color_id && (
+                      <span
+                        className="h-3.5 w-3.5 rounded-full border border-black/10 shrink-0"
+                        style={{ background: colorHex(pair.color_id) }}
+                        title="Zielfarbe"
+                      />
+                    )}
                     <Pill tone={pair.detail_level === 'full' ? 'soft' : 'neutral'}>
                       {pair.detail_level === 'full' ? 'Volle Details' : `Busy · „${pair.busy_title}"`}
                     </Pill>
@@ -493,6 +519,35 @@ export default function PairsPage() {
             <p className="mt-1 text-xs text-ink/60">
               Wird vor jeden gespiegelten Titel gesetzt, z. B. „(P) Meeting". Leer = kein Tag.
             </p>
+          </div>
+          <div>
+            <label className="field-label">Farbe im Ziel-Kalender</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, color_id: '' }))}
+                title="Standard (Kalenderfarbe)"
+                className={`h-7 w-7 rounded-full border grid place-items-center text-xs text-ink/50 bg-paper ${
+                  form.color_id === '' ? 'ring-2 ring-royal/40 border-royal' : 'border-ink/25'
+                }`}
+              >
+                –
+              </button>
+              {EVENT_COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, color_id: c.id }))}
+                  title={c.name}
+                  style={{ background: c.hex }}
+                  className={`h-7 w-7 rounded-full ${
+                    form.color_id === c.id
+                      ? 'ring-2 ring-offset-1 ring-ink'
+                      : 'border border-black/10'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">

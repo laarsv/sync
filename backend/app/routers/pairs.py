@@ -87,6 +87,7 @@ def create_pair(
         busy_title=payload.busy_title or "Belegt",
         title_prefix=(payload.title_prefix or "").strip(),
         confidential=payload.confidential,
+        color_id=payload.color_id,
         active=payload.active,
     )
     db.add(pair)
@@ -114,6 +115,7 @@ async def update_pair(
         "busy_title": pair.busy_title,
         "title_prefix": pair.title_prefix,
         "confidential": pair.confidential,
+        "color_id": pair.color_id,
         "active": pair.active,
     }
 
@@ -140,6 +142,7 @@ async def update_pair(
         pair.busy_title != old["busy_title"]
         or pair.title_prefix != old["title_prefix"]
         or pair.confidential != old["confidential"]
+        or pair.color_id != old["color_id"]
     )
     deactivating = old["active"] and not pair.active
     activating = not old["active"] and pair.active
