@@ -23,6 +23,7 @@ const EMPTY_FORM = {
   title_prefix: '',
   confidential: true,
   active: true,
+  create_reverse: false,
 }
 
 function StatusPill({ pair }) {
@@ -131,6 +132,7 @@ export default function PairsPage() {
       title_prefix: pair.title_prefix || '',
       confidential: pair.confidential,
       active: pair.active,
+      create_reverse: false,
     })
     setFormError(null)
     setModalOpen(true)
@@ -158,14 +160,33 @@ export default function PairsPage() {
       confidential: form.confidential,
       active: form.active,
     }
+    let reverseNote = null
     try {
       if (editing) {
         await api.patch(`/pairs/${editing.id}`, payload)
       } else {
         await api.post('/pairs', payload)
+        if (form.create_reverse) {
+          const rev = {
+            ...payload,
+            source_calendar_id: payload.target_calendar_id,
+            source_calendar_label: payload.target_calendar_label,
+            target_calendar_id: payload.source_calendar_id,
+            target_calendar_label: payload.source_calendar_label,
+          }
+          try {
+            await api.post('/pairs', rev)
+          } catch (e2) {
+            // 409 = Gegenrichtung existierte schon -> still ok; sonst Hinweis.
+            if (!(e2 instanceof ApiError && e2.status === 409)) {
+              reverseNote = 'Gegenrichtung nicht angelegt: ' + e2.message
+            }
+          }
+        }
       }
       setModalOpen(false)
       await load()
+      if (reverseNote) setError(reverseNote)
       // Frisch angelegt/geändert -> sofort spiegeln.
       runSync(true)
     } catch (e) {
@@ -494,6 +515,20 @@ export default function PairsPage() {
               label="Aktiv"
             />
           </div>
+          {!editing && (
+            <label className="flex items-start gap-2 text-sm cursor-pointer select-none border-t border-ink/10 pt-4">
+              <input
+                type="checkbox"
+                checked={form.create_reverse}
+                onChange={(e) => setForm((f) => ({ ...f, create_reverse: e.target.checked }))}
+                className="h-4 w-4 mt-0.5 rounded border-ink/30 text-royal focus:ring-royal/40"
+              />
+              <span>
+                <span className="font-bold">Auch Gegenrichtung anlegen</span>
+                <span className="text-ink/60"> — zweites Paar Ziel → Quelle mit denselben Einstellungen.</span>
+              </span>
+            </label>
+          )}
         </div>
       </Modal>
     </div>

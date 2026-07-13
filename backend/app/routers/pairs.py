@@ -63,6 +63,20 @@ def create_pair(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Quelle und Ziel duerfen nicht identisch sein.",
         )
+    dup = (
+        db.query(SyncPair)
+        .filter_by(
+            owner_user_id=current_user.id,
+            source_calendar_id=payload.source_calendar_id,
+            target_calendar_id=payload.target_calendar_id,
+        )
+        .first()
+    )
+    if dup is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ein Paar mit dieser Quelle und diesem Ziel existiert bereits.",
+        )
     pair = SyncPair(
         owner_user_id=current_user.id,
         source_calendar_id=payload.source_calendar_id,
