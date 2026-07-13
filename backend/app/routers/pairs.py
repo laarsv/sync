@@ -240,3 +240,20 @@ def sync_status(
         running=sync_engine.is_sync_running(db, current_user.id),
         last_run=SyncRunOut.model_validate(last) if last else None,
     )
+
+
+@router.get("/runs", response_model=List[SyncRunOut])
+def list_runs(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> List[SyncRunOut]:
+    limit = max(1, min(limit, 100))
+    runs = (
+        db.query(SyncRun)
+        .filter_by(user_id=current_user.id)
+        .order_by(SyncRun.id.desc())
+        .limit(limit)
+        .all()
+    )
+    return [SyncRunOut.model_validate(r) for r in runs]

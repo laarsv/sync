@@ -57,6 +57,8 @@ export default function PairsPage() {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
   const [syncing, setSyncing] = useState(false)
+  const [runs, setRuns] = useState(null)
+  const [showRuns, setShowRuns] = useState(false)
   const pollTimer = useRef(null)
   const mountedRef = useRef(true)
 
@@ -270,6 +272,7 @@ export default function PairsPage() {
       }
     }
     await load()
+    if (showRuns) loadRuns()
   }
 
   async function runSync(silent = false) {
@@ -291,6 +294,21 @@ export default function PairsPage() {
       return
     }
     scheduleNextPoll(true)
+  }
+
+  async function loadRuns() {
+    setRuns(null)
+    try {
+      setRuns(await api.get('/pairs/runs?limit=20'))
+    } catch {
+      setRuns([])
+    }
+  }
+
+  function toggleRuns() {
+    const next = !showRuns
+    setShowRuns(next)
+    if (next && runs === null) loadRuns()
   }
 
   if (!pairs || !status) {
@@ -452,6 +470,54 @@ export default function PairsPage() {
           ))}
         </div>
       )}
+
+      <div className="pt-2">
+        <button className="text-sm font-bold text-royal hover:underline" onClick={toggleRuns}>
+          {showRuns ? 'Sync-Verlauf ausblenden' : 'Sync-Verlauf anzeigen'}
+        </button>
+        {showRuns && (
+          <div className="mt-3 card p-0 divide-y divide-ink/5">
+            {runs === null && (
+              <div className="p-4 flex justify-center">
+                <Spinner size="sm" />
+              </div>
+            )}
+            {runs && runs.length === 0 && (
+              <div className="p-4 text-sm text-ink/50">Noch keine Läufe.</div>
+            )}
+            {runs &&
+              runs.map((r, i) => (
+                <div key={i} className="px-4 py-2.5 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                      {r.ok ? <Pill tone="ok">OK</Pill> : <Pill tone="err">Fehler</Pill>}
+                      <span className="text-ink/60">
+                        {r.trigger === 'manual' ? 'Manuell' : 'Auto'}
+                      </span>
+                      <span className="text-ink/50 text-xs">
+                        {formatDateTime(r.finished_at || r.started_at)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-ink/60 shrink-0 tabular-nums">
+                      +{r.created} / ~{r.updated} / −{r.deleted}
+                    </div>
+                  </div>
+                  {r.error === 'revoked' && (
+                    <div className="mt-1 text-xs text-red-700">
+                      Zugriff widerrufen — bitte neu verbinden.
+                    </div>
+                  )}
+                  {r.error === 'not_connected' && (
+                    <div className="mt-1 text-xs text-ink/50">Nicht verbunden.</div>
+                  )}
+                  {!r.ok && r.error && !['revoked', 'not_connected'].includes(r.error) && (
+                    <div className="mt-1 text-xs text-red-700 break-words">{r.error}</div>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
 
       <Modal
         open={modalOpen}
