@@ -26,10 +26,10 @@ class Settings(BaseSettings):
     # unterschiedliche Redirects/Scopes, gleiche client_id/secret.
     GOOGLE_OAUTH_CLIENT_ID: str = ""
     GOOGLE_OAUTH_CLIENT_SECRET: str = ""
-    # Login-Redirect (server-side, Authlib) -> Backend-Route.
-    GOOGLE_OAUTH_REDIRECT_URI: str = "https://sync.vrwb.de/api/auth/google/callback"
-    # Calendar-Consent-Redirect (frontend-driven) -> SPA-Route.
-    GOOGLE_CALENDAR_REDIRECT_URI: str = "https://sync.vrwb.de/calendar/callback"
+    # Redirect-URIs. Leer -> werden aus APP_BASE_URL abgeleitet (siehe unten).
+    # Nur setzen, wenn du abweichende URIs brauchst.
+    GOOGLE_OAUTH_REDIRECT_URI: str = ""
+    GOOGLE_CALENDAR_REDIRECT_URI: str = ""
 
     # Fernet-Key (32 url-safe base64 Bytes) fuer Encryption der Google-OAuth-Tokens
     # at-rest. Generieren mit:
@@ -37,13 +37,18 @@ class Settings(BaseSettings):
     # Wenn leer, ist die Kalender-Verbindung deaktiviert und liefert einen klaren Fehler.
     GOOGLE_TOKEN_ENCRYPTION_KEY: str = ""
 
-    # Login/Consent ausschliesslich fuer diese Google-Workspace-Domain.
-    ALLOWED_EMAIL_DOMAIN: str = "koenigswege.com"
-    # Diese Adresse wird beim ersten Login automatisch Admin.
-    INITIAL_ADMIN_EMAIL: str = "lars.verwiebe@koenigswege.com"
+    # Login-Beschraenkung auf eine Google-Workspace-Domain. LEER = jeder
+    # verifizierte Google-Account darf sich anmelden (fuer Einzel-/Privatbetrieb).
+    ALLOWED_EMAIL_DOMAIN: str = ""
+    # Diese Adresse wird beim ersten Login automatisch Admin. Leer -> der ALLERERSTE
+    # Nutzer, der sich anmeldet, wird Admin.
+    INITIAL_ADMIN_EMAIL: str = ""
 
-    CORS_ORIGINS: str = "https://sync.vrwb.de,http://localhost:5173"
-    APP_BASE_URL: str = "https://sync.vrwb.de"
+    # Oeffentliche Basis-URL der Instanz (z.B. https://sync.example.com). Steuert
+    # Redirect-URIs, CORS und Mail-Links. Lokal: http://localhost:5173.
+    APP_BASE_URL: str = "http://localhost:5173"
+    # CORS-Origins (kommasepariert). Leer -> APP_BASE_URL.
+    CORS_ORIGINS: str = ""
 
     # Brevo Transactional Mail (Reconnect-Benachrichtigung). Leer -> Mail aus.
     BREVO_API_KEY: str = ""
@@ -66,8 +71,21 @@ class Settings(BaseSettings):
     DEV_LOGIN: bool = False
 
     @property
+    def base_url(self) -> str:
+        return self.APP_BASE_URL.rstrip("/")
+
+    @property
+    def login_redirect_uri(self) -> str:
+        return self.GOOGLE_OAUTH_REDIRECT_URI or f"{self.base_url}/api/auth/google/callback"
+
+    @property
+    def calendar_redirect_uri(self) -> str:
+        return self.GOOGLE_CALENDAR_REDIRECT_URI or f"{self.base_url}/calendar/callback"
+
+    @property
     def cors_origins_list(self) -> List[str]:
-        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        origins = [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        return origins or [self.base_url]
 
 
 @lru_cache

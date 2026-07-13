@@ -1,8 +1,8 @@
 """Frontend-getriebener Google-OAuth-Flow fuer die Calendar-Scopes.
 
-Portiert aus financeandcoffee-shop (bewaehrtes Muster). Eigener Redirect-URI,
-eigene Scopes, eigene Token-Persistenz. Refresh- und Access-Token werden mit
-Fernet at-rest verschluesselt in `google_oauth_credentials` abgelegt.
+Eigener Redirect-URI, eigene Scopes, eigene Token-Persistenz. Refresh- und
+Access-Token werden mit Fernet at-rest verschluesselt in
+`google_oauth_credentials` abgelegt.
 
 Der `state` wird mit APP_SECRET (jose JWT, HS256) signiert - CSRF-Schutz +
 Bindung an den eingeloggten User.
@@ -130,7 +130,7 @@ def build_authorize_url(user: User, redirect_uri: Optional[str] = None) -> str:
     _get_fernet()  # frueh validieren - sonst klemmt der Callback
     params = {
         "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
-        "redirect_uri": redirect_uri or settings.GOOGLE_CALENDAR_REDIRECT_URI,
+        "redirect_uri": redirect_uri or settings.calendar_redirect_uri,
         "response_type": "code",
         "scope": " ".join(AUTHORIZE_SCOPES),
         "access_type": "offline",

@@ -1,19 +1,28 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { api } from '../lib/api'
 import Spinner from '../components/ui/Spinner'
 
 const ERRORS = {
   oauth_failed: 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
   email_unverified: 'Deine Google-Adresse ist nicht verifiziert.',
-  wrong_domain: 'Login nur mit @koenigswege.com-Adressen möglich.',
+  wrong_domain: 'Diese Google-Adresse ist für diese Instanz nicht zugelassen.',
 }
 
 export default function Login() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const [allowedDomain, setAllowedDomain] = useState('')
   const error = params.get('error')
+
+  useEffect(() => {
+    api
+      .get('/config')
+      .then((c) => setAllowedDomain(c?.allowed_email_domain || ''))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!loading && user) navigate('/', { replace: true })
@@ -50,8 +59,10 @@ export default function Login() {
           <span className="text-4xl font-black tracking-wordmark">Sync</span>
         </div>
         <p className="mt-4 text-sm text-paper/60 leading-relaxed">
-          Google-Kalender-Sync fürs Königswege-Team. Anmeldung mit deiner
-          @koenigswege.com-Adresse.
+          Google-Kalender-Sync.{' '}
+          {allowedDomain
+            ? `Anmeldung mit deiner @${allowedDomain}-Adresse.`
+            : 'Anmeldung mit deinem Google-Konto.'}
         </p>
 
         {error && (

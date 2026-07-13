@@ -10,12 +10,12 @@ const STEPS = [
   {
     icon: LinkIcon,
     title: 'Google-Konto verbinden',
-    text: 'Unter „Kalender verbinden" verbindest du deinen @koenigswege.com-Account einmalig per Google-Login. Sync speichert nur diesen einen Zugang – verschlüsselt.',
+    text: 'Unter „Kalender verbinden" verbindest du deinen Google-Account einmalig per Login. Sync speichert nur diesen einen Zugang – verschlüsselt.',
   },
   {
     icon: Share,
     title: 'Private Kalender reinholen',
-    text: 'Private Kalender nicht hier separat einloggen, sondern in Google nativ an deinen @koenigswege.com-Account freigeben. Danach erscheinen sie automatisch in der Kalenderliste.',
+    text: 'Private Kalender nicht hier separat einloggen, sondern in Google nativ an deinen verbundenen Account freigeben. Danach erscheinen sie automatisch in der Kalenderliste.',
   },
   {
     icon: Check,

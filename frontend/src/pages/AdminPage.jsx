@@ -28,7 +28,7 @@ export default function AdminPage() {
         <p className="eyebrow">Admin</p>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Team-Übersicht</h1>
         <p className="text-sm text-ink/60 mt-1">
-          Verbindungs- und Sync-Status aller @koenigswege.com-Nutzer.
+          Verbindungs- und Sync-Status aller Nutzer.
         </p>
       </div>
 

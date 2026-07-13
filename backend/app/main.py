@@ -123,4 +123,5 @@ def app_config():
     return {
         "poll_interval_minutes": settings.SYNC_POLL_INTERVAL_MINUTES,
         "backfill_days": settings.SYNC_BACKFILL_DAYS,
+        "allowed_email_domain": settings.ALLOWED_EMAIL_DOMAIN,
     }

@@ -1,0 +1,15 @@
+# Used by the bundled Caddy in docker-compose.yml. $DOMAIN comes from .env.
+# Caddy terminates TLS (automatic HTTPS) and splits /api/* to the backend,
+# everything else to the nginx-served SPA.
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:80
+	}
+}

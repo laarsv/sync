@@ -87,8 +87,8 @@ export default function ConnectPage() {
         <p className="eyebrow">Verbindung</p>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Kalender verbinden</h1>
         <p className="text-sm text-ink/60 mt-1">
-          Verbinde deinen @koenigswege.com-Google-Account. Über die native
-          Google-Freigabe reingeteilte Kalender erscheinen automatisch in der Liste.
+          Verbinde deinen Google-Account. Über die native Google-Freigabe
+          reingeteilte Kalender erscheinen automatisch in der Liste.
         </p>
       </div>
 
@@ -167,7 +167,7 @@ export default function ConnectPage() {
         <h3 className="font-black text-sm">So kommen private Kalender rein</h3>
         <ul className="mt-2 text-sm text-ink/70 space-y-1.5 list-disc pl-5">
           <li>
-            Privaten Kalender in Google an deinen <b>@koenigswege.com</b>-Account freigeben —
+            Privaten Kalender in Google an deinen verbundenen Account freigeben —
             nicht hier separat einloggen.
           </li>
           <li>

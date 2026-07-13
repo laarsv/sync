@@ -1,24 +1,29 @@
 # CLAUDE.md — Sync
 
-Google-Kalender-Sync-Tool fürs Königswege-Team, `sync.vrwb.de`. Eigener Auftritt
-in Royal-Blau (`#2947c9`), UI **strikt** nach `DESIGN.md`.
+Self-hosted Google Calendar mirroring tool. UI in German; UI strictly follows
+`DESIGN.md` (royal blue, `#2947c9`).
 
-## Stack / Muster
-- Backend: FastAPI + SQLAlchemy (SQLite), APScheduler. Google Calendar REST via
-  httpx (kein SDK). Login: Google OIDC (Authlib, Session-Cookie, nur
-  `@koenigswege.com`). Calendar-OAuth-Token pro User, Fernet-verschlüsselt
-  (`GOOGLE_TOKEN_ENCRYPTION_KEY`). Muster übernommen aus `financeandcoffee-shop`.
-- Frontend: React + Vite + Tailwind, nginx-SPA. Deploy-Muster aus `relay`/`tab`.
-- Prod: 2 Container (`sync-api`, `sync-web`) am externen Docker-Netz `proxy`,
-  Caddy routet per **explizitem container_name**. Daten unter
-  `/opt/appdata/sync/data`, Checkout `/opt/appdata/sync-app`.
+## Stack / layout
+- Backend (`backend/app`): FastAPI + SQLAlchemy (SQLite) + APScheduler. Google
+  Calendar REST via `httpx` (no SDK). Login: Google OIDC (Authlib, session
+  cookie). Per-user Google token, Fernet-encrypted at rest
+  (`GOOGLE_TOKEN_ENCRYPTION_KEY`).
+- Frontend (`frontend/`): React + Vite + Tailwind, nginx-served SPA.
+- Deploy: `docker-compose.yml` (self-contained + bundled Caddy) or
+  `docker-compose.prod.yml` (behind an existing reverse proxy).
 
-## Nicht anfassen ohne Grund
-- `services/sync_engine.py` — Loop-Schutz (`syncSource`-Marker), Idempotenz
-  (`event_mappings`), Delete-Propagation (syncToken-Deltas, `status=cancelled`),
-  `sendUpdates=none` (nie Invites), Busy-Modus (keine Details/Teilnehmer).
-- `auth/google_calendar.py` — Token-Exchange/Refresh/Revoke + Fernet.
+## Don't touch without care
+- `services/sync_engine.py` — loop protection (`syncSource` marker), idempotency
+  (`event_mappings`), delete propagation (syncToken deltas, `status=cancelled`),
+  skip free/declined events, `sendUpdates=none` (never send invites), busy mode,
+  short-held SQLite write locks (commit per source event), per-user DB run lock.
+- `auth/google_calendar.py` — token exchange/refresh/revoke + Fernet.
 
-## Deploy
-`./deploy.sh` auf dem Host (git pull + `docker compose -f docker-compose.prod.yml
-up -d --build`). Kein CI.
+## Config
+Everything is env-driven; base URL, redirect URIs and CORS derive from
+`APP_BASE_URL`/`DOMAIN`. See `.env.example`. No hardcoded domains or org data.
+
+## Conventions
+- Backend comments are in German; keep new code consistent with the surrounding
+  style.
+- Commit messages: concise; describe the change.

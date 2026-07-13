@@ -4,9 +4,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Eigener Auftritt: Royal-Blau ersetzt ueberall das Mint des Fin.Co-Systems.
-        // Blau ist ein DUNKLER Akzent -> Vordergrund auf Flaeche = Weiss (paper),
-        // und Blau DARF als Textfarbe (Kontrast auf Weiss ~7.4:1, AA/AAA).
+        // Royal blue accent. A DARK accent -> foreground on a fill = white
+        // (paper), and blue may be used as a text color (~7.4:1 on white).
         royal: {
           DEFAULT: '#2947c9',
           soft: '#aeb9ee',

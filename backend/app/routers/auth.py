@@ -20,9 +20,7 @@ def _redirect_login(error: str) -> RedirectResponse:
 
 @router.get("/google/login")
 async def google_login(request: Request):
-    return await oauth.google.authorize_redirect(
-        request, settings.GOOGLE_OAUTH_REDIRECT_URI
-    )
+    return await oauth.google.authorize_redirect(request, settings.login_redirect_uri)
 
 
 @router.get("/google/callback")
@@ -40,16 +38,21 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     google_sub = userinfo.get("sub")
     picture = userinfo.get("picture")
 
-    # OAuth-Haertung: verifizierte Mail UND hd-Claim UND E-Mail-Domain muessen
-    # exakt auf die erlaubte Workspace-Domain passen.
+    # OAuth-Haertung: Mail muss verifiziert sein. Ist eine Workspace-Domain
+    # gesetzt, muessen zusaetzlich hd-Claim UND E-Mail-Domain exakt passen.
+    # Leere Domain -> jeder verifizierte Google-Account darf sich anmelden.
     if not email or not email_verified:
         return _redirect_login("email_unverified")
     allowed = settings.ALLOWED_EMAIL_DOMAIN.lower().strip()
     email_domain = email.split("@")[-1] if "@" in email else ""
-    if not allowed or hd != allowed or email_domain != allowed:
+    if allowed and (hd != allowed or email_domain != allowed):
         return _redirect_login("wrong_domain")
 
-    is_admin_email = email == settings.INITIAL_ADMIN_EMAIL.lower().strip()
+    # Admin-Bestimmung: gesetzte INITIAL_ADMIN_EMAIL -> genau die wird Admin.
+    # Leer -> der allererste Nutzer der Instanz wird Admin.
+    admin_email = settings.INITIAL_ADMIN_EMAIL.lower().strip()
+    is_first_user = db.query(User).count() == 0
+    is_admin = (email == admin_email) if admin_email else is_first_user
 
     user = db.query(User).filter(User.google_sub == google_sub).one_or_none()
     if user is None:
@@ -61,7 +64,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             email=email,
             name=name,
             picture_url=picture,
-            role=UserRole.admin if is_admin_email else UserRole.user,
+            role=UserRole.admin if is_admin else UserRole.user,
         )
         db.add(user)
         db.flush()
@@ -72,7 +75,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             user.name = name
         if picture:
             user.picture_url = picture
-        if is_admin_email and user.role != UserRole.admin:
+        if is_admin and user.role != UserRole.admin:
             user.role = UserRole.admin
 
     user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)

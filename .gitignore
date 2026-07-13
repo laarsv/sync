@@ -10,6 +10,7 @@ backend/.pytest_cache/
 *.db
 *.db-wal
 *.db-shm
+/data/
 backend/data/
 
 # Node / Vite

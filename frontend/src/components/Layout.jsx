@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { Burger, Close, Help } from './ui/Icons'
 import IntroModal from './IntroModal'
 
-// Eigener Wortmarke-Auftritt in Royal-Blau (kein KW-/Fin.Co-Logo).
+// Wordmark in royal blue.
 function Wordmark({ className = '' }) {
   return (
     <span className={`flex items-center gap-2 min-w-0 ${className}`}>

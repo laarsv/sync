@@ -7,8 +7,8 @@ from ..database import Base
 
 
 class GoogleOAuthCredentials(Base):
-    """Ein Token pro User (der koenigswege-Account). Refresh- und Access-Token
-    Fernet-verschluesselt at-rest. Muster 1:1 aus financeandcoffee-shop."""
+    """Ein Google-OAuth-Token pro User. Refresh- und Access-Token
+    Fernet-verschluesselt at-rest."""
 
     __tablename__ = "google_oauth_credentials"
 
