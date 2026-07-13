@@ -57,6 +57,8 @@ export default function Layout({ children }) {
     navigate('/login', { replace: true })
   }
 
+  const nav = [...NAV, ...(user?.is_admin ? [{ to: '/admin', label: 'Admin' }] : [])]
+
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <header className="bg-paper border-b border-royal/15 sticky top-0 z-40">
@@ -66,7 +68,7 @@ export default function Layout({ children }) {
           </NavLink>
 
           <nav className="hidden md:flex items-center gap-1">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end} className={navCls}>
                 {item.label}
               </NavLink>
@@ -117,7 +119,7 @@ export default function Layout({ children }) {
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto py-2">
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}

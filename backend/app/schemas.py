@@ -173,3 +173,21 @@ class SyncRunOut(BaseModel):
 class SyncStatusOut(BaseModel):
     running: bool
     last_run: Optional[SyncRunOut] = None
+
+
+class AdminUserOut(BaseModel):
+    id: int
+    email: str
+    name: Optional[str] = None
+    is_admin: bool
+    connected: bool
+    google_email: Optional[str] = None
+    pair_count: int
+    active_pair_count: int
+    last_run_at: Optional[datetime] = None
+    last_status: str  # "ok" | "error" | "never"
+    last_error: Optional[str] = None
+
+    @field_serializer("last_run_at")
+    def _ser_dt(self, dt: Optional[datetime]) -> Optional[str]:
+        return _utc_iso(dt)

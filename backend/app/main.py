@@ -12,7 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from .config import settings
 from .database import Base, SessionLocal, engine
 from . import models  # noqa: F401 - Mapper registrieren
-from .routers import auth, calendar, pairs
+from .routers import admin, auth, calendar, pairs
 from .services.sync_engine import scheduled_sync
 
 logging.basicConfig(level=logging.INFO)
@@ -109,6 +109,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(calendar.router)
 app.include_router(pairs.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health")
