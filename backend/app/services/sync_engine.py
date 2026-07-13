@@ -79,6 +79,20 @@ def _is_mirror(ev: dict) -> bool:
     return priv.get(MIRROR_MARKER_KEY) == MIRROR_MARKER_VALUE
 
 
+def _should_skip_event(ev: dict) -> bool:
+    """Events, die keine Zeit blockieren, werden nicht gespiegelt:
+    - `transparency=transparent` (als "frei" markiert),
+    - vom verbundenen Account abgelehnt (`self` + responseStatus=declined).
+    Ein bereits gespiegeltes solches Event wird wie eine Absage behandelt
+    (Mirror wird entfernt)."""
+    if ev.get("transparency") == "transparent":
+        return True
+    for att in ev.get("attendees") or []:
+        if att.get("self") and att.get("responseStatus") == "declined":
+            return True
+    return False
+
+
 def _copy_time(t: Optional[dict]) -> dict:
     if not t:
         return {}
@@ -285,7 +299,8 @@ async def _sync_source(
         # LOOP-SCHUTZ: eigene Kopien nie erneut spiegeln.
         if _is_mirror(ev):
             continue
-        cancelled = ev.get("status") == "cancelled"
+        # Absage ODER "frei"/abgelehnt -> wie Absage behandeln (Mirror ggf. weg).
+        cancelled = ev.get("status") == "cancelled" or _should_skip_event(ev)
         for p in pairs:
             await _apply(db, token, p, ev, cancelled, counters[p.id])
         db.commit()  # Schreibsperre nach jedem Quell-Event freigeben
