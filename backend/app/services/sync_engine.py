@@ -41,6 +41,7 @@ from ..models import (
     User,
 )
 from . import google_calendar as svc
+from . import mail
 
 logger = logging.getLogger(__name__)
 
@@ -339,6 +340,18 @@ async def sync_user(db: Session, user: User, trigger: str = "poll") -> Counter:
 
     try:
         token = await gcal.get_valid_access_token(db, user)
+    except gcal.CalendarRevokedError:
+        # Token widerrufen: die in get_valid_access_token geflushte Creds-Loeschung
+        # MIT festschreiben (kein rollback) -> naechster Lauf skippt den User, keine
+        # Wiederholung. Einmalig per Mail zum Neu-Verbinden auffordern.
+        _write_run(db, user, trigger, started, total, ok=False, error="revoked")
+        try:
+            sent = await mail.send_reconnect_email(user)
+            if sent:
+                logger.info("Reconnect-Mail an %s gesendet (Token widerrufen)", user.email)
+        except Exception:  # noqa: BLE001
+            logger.exception("Reconnect-Mail fehlgeschlagen fuer user %s", user.id)
+        return total
     except gcal.CalendarAuthError as exc:
         db.rollback()
         _write_run(

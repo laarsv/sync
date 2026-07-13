@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "https://sync.vrwb.de,http://localhost:5173"
     APP_BASE_URL: str = "https://sync.vrwb.de"
 
+    # Brevo Transactional Mail (Reconnect-Benachrichtigung). Leer -> Mail aus.
+    BREVO_API_KEY: str = ""
+    BREVO_FROM_NAME: str = "Sync"
+    BREVO_FROM_EMAIL: str = ""
+
     # Sync-Engine.
     SYNC_POLL_INTERVAL_MINUTES: int = 3
     # Wie weit in die Vergangenheit beim Full-Sync (timeMin). Aeltere Quell-Events

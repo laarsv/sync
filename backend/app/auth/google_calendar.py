@@ -55,6 +55,11 @@ class CalendarNotConnectedError(CalendarAuthError):
     pass
 
 
+class CalendarRevokedError(CalendarNotConnectedError):
+    """Token war vorhanden, wurde aber von Google widerrufen -> Creds geloescht.
+    Ausloeser fuer die einmalige Reconnect-Benachrichtigung."""
+
+
 class EncryptionKeyMissingError(CalendarAuthError):
     pass
 
@@ -274,7 +279,7 @@ async def get_valid_access_token(db: Session, user: User) -> str:
         # Refresh-Token revoked/abgelaufen - Credentials weg, User muss neu verbinden.
         db.delete(creds)
         db.flush()
-        raise CalendarNotConnectedError(
+        raise CalendarRevokedError(
             "Google hat den Zugriff widerrufen. Bitte erneut verbinden."
         )
 
