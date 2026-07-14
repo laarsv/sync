@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { Burger, Close, Help } from './ui/Icons'
 import IntroModal from './IntroModal'
 import Wordmark from './Wordmark'
+import Logo from './Logo'
 
 const NAV = [
   { to: '/', label: 'Sync-Paare', end: true },
@@ -49,7 +50,7 @@ export default function Layout({ children }) {
       <header className="bg-paper border-b border-royal/15 sticky top-0 z-40">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <NavLink to="/" className="flex items-center min-w-0">
-            <Wordmark className="text-xl" />
+            <Logo />
           </NavLink>
 
           <nav className="hidden md:flex items-center gap-1">

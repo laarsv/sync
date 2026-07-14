@@ -23,12 +23,15 @@ gewinnt). Konvention:
 
 - **Wortmarke** `vrwb` = gesetzter Text, **immer klein**, Roboto **900**, Laufweite
   **−4,5 %** (`tracking-wordmark`). Cursor `_` in Royal = einziges grafisches Element.
-- **Produkt-Lockup „Standalone" — die Marke dieses Tools** (`components/Wordmark.jsx`,
-  nie inline nachbauen): **`vrwb_sync`** — der Unterstrich wird zum Trenner in Royal,
-  der Toolname hängt direkt dran in **Roboto Mono 500 Royal**, ~0,83× Größe, Laufweite
-  −1 % (`tracking-toolname`). Toolname immer klein, ein Wort. Einsatz: App-Header,
-  Login-Hero, Footer (→ vrwb.de), Browser-Titel. Auf Ink: `vrwb` weiß, `_sync` in
-  **Royal Soft** (`<Wordmark onInk />`).
+- **Produkt-Lockup „Standalone"** (`components/Wordmark.jsx`, nie inline nachbauen):
+  **`vrwb_sync`** — der Unterstrich wird zum Trenner in Royal, der Toolname hängt direkt
+  dran in **Roboto Mono 500 Royal**, ~0,83× Größe, Laufweite −1 % (`tracking-toolname`).
+  Toolname immer klein, ein Wort. Einsatz: Login-Hero, Footer (→ vrwb.de), Browser-Titel.
+  Auf Ink: `vrwb` weiß, `_sync` in **Royal Soft** (`<Wordmark onInk />`).
+- **Produkt-Lockup „Mit Signatur" — bevorzugte Marke, im App-Header** (`components/Logo.jsx`):
+  handschriftliche Signatur (Royal, `public/logo-clean.svg` als CSS-Maske) links, dünne
+  Haarlinie (`bg-ink/15`) als Trenner, rechts das Standalone-Lockup `vrwb_sync`. Signatur
+  = „der Mensch", `vrwb_` = „die Maschine".
 - **Blink** (`.wordmark-cursor-blink`, 1,2 s `steps`) nur für den Cursor der puren
   Dachmarken-Wortmarke im Hero (Login-Fußzeile `vrwb_`) — nie im Standalone-Lockup
   (dort ist `_` Trenner, kein Cursor) und nie in der App-Nav.
