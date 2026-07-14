@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { api } from '../lib/api'
 import Spinner from '../components/ui/Spinner'
+import Wordmark from '../components/Wordmark'
 
 const ERRORS = {
   oauth_failed: 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
@@ -48,16 +49,7 @@ export default function Login() {
       />
 
       <div className="relative z-10 w-full max-w-md px-4 sm:px-8 py-12 text-center">
-        <div className="flex items-center justify-center gap-3 text-paper">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-royal">
-            <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 10a8 8 0 0 1 13.7-4.5L20 8" />
-              <path d="M20 14a8 8 0 0 1-13.7 4.5L4 16" />
-              <path d="M20 4v4h-4M4 20v-4h4" />
-            </svg>
-          </span>
-          <span className="text-4xl font-black tracking-wordmark">Sync</span>
-        </div>
+        <Wordmark onInk className="text-5xl" />
         <p className="mt-4 text-sm text-paper/60 leading-relaxed">
           Google-Kalender-Sync.{' '}
           {allowedDomain
@@ -78,6 +70,10 @@ export default function Login() {
         >
           Mit Google anmelden
         </a>
+
+        <div className="mt-10 text-sm font-black tracking-wordmark text-paper/50 select-none">
+          vrwb<span className="text-royal wordmark-cursor-blink">_</span>
+        </div>
       </div>
     </div>
   )

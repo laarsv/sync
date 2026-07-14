@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="14" fill="#2947c9"/>
-  <g fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 27a13 13 0 0 1 22-5l4 4"/>
-    <path d="M44 37a13 13 0 0 1-22 5l-4-4"/>
-    <path d="M46 16v10H36"/>
-    <path d="M18 48V38h10"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- VRWB CI v1.0 Bildmarke: Anfangsbuchstabe + Cursor auf Royal, Radius ~23% -->
+  <rect width="64" height="64" rx="15" fill="#2947c9"/>
+  <text x="32" y="45" text-anchor="middle"
+        font-family="Roboto, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif"
+        font-weight="900" font-size="36" letter-spacing="-1.4">
+    <tspan fill="#ffffff">s</tspan><tspan fill="#aeb9ee">_</tspan>
+  </text>
 </svg>

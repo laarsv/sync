@@ -50,7 +50,7 @@ export default function IntroModal({ onDismiss }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Willkommen bei Sync"
+        aria-label="Willkommen bei sync"
         className="relative z-10 w-full sm:max-w-lg bg-paper rounded-t-2xl sm:rounded-2xl shadow-xl
           max-h-[92vh] flex flex-col"
       >
@@ -72,7 +72,7 @@ export default function IntroModal({ onDismiss }) {
               </svg>
             </span>
             <div>
-              <div className="text-lg font-black tracking-wordmark">Willkommen bei Sync</div>
+              <div className="text-lg font-black tracking-wordmark">Willkommen bei sync</div>
               <div className="text-sm text-paper/80">In 5 Schritten erklärt</div>
             </div>
           </div>

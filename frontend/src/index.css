@@ -14,6 +14,13 @@
     font-weight: 900;
     letter-spacing: -0.01em;
   }
+
+  /* VRWB CI: Cursor-Blink der puren Dachmarke (nur Login-Fußzeile). */
+  @keyframes vrwb-blink {
+    0%, 55% { opacity: 1; }
+    56%, 100% { opacity: 0; }
+  }
+  .wordmark-cursor-blink { animation: vrwb-blink 1.2s steps(1) infinite; }
 }
 
 @layer components {

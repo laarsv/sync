@@ -15,6 +15,30 @@ colors: {
 
 `<meta name="theme-color" content="#2947c9">`.
 
+## 1b. Wortmarke, Produkt-Lockup & Bildmarke — VRWB CI v1.0 (verbindlich)
+
+Quelle (Source of Truth): claude.ai-Design-Projekt **„VRWB Markenidentität"**
+(`VRWB Corporate Identity.dc.html`, per DesignSync erreichbar; das Design-Projekt
+gewinnt). Konvention:
+
+- **Wortmarke** `vrwb` = gesetzter Text, **immer klein**, Roboto **900**, Laufweite
+  **−4,5 %** (`tracking-wordmark`). Cursor `_` in Royal = einziges grafisches Element.
+- **Produkt-Lockup „Standalone" — die Marke dieses Tools** (`components/Wordmark.jsx`,
+  nie inline nachbauen): **`vrwb_sync`** — der Unterstrich wird zum Trenner in Royal,
+  der Toolname hängt direkt dran in **Roboto Mono 500 Royal**, ~0,83× Größe, Laufweite
+  −1 % (`tracking-toolname`). Toolname immer klein, ein Wort. Einsatz: App-Header,
+  Login-Hero, Footer (→ vrwb.de), Browser-Titel. Auf Ink: `vrwb` weiß, `_sync` in
+  **Royal Soft** (`<Wordmark onInk />`).
+- **Blink** (`.wordmark-cursor-blink`, 1,2 s `steps`) nur für den Cursor der puren
+  Dachmarken-Wortmarke im Hero (Login-Fußzeile `vrwb_`) — nie im Standalone-Lockup
+  (dort ist `_` Trenner, kein Cursor) und nie in der App-Nav.
+- **Bildmarke/Favicon**: Anfangsbuchstabe + Cursor (`s_`) weiß/royal-soft auf Royal,
+  abgerundetes Quadrat mit Radius ≈ 23 % der Kante (`frontend/public/favicon.svg`).
+  Wortmarke und Bildmarke nie nebeneinander doppeln.
+- Nie „Sync"/„SYNC"/„VRWB" als Marke setzen, nicht sperren/stauchen, keine
+  Schatten/Verläufe/Outlines.
+- Roboto Mono self-hosted via `@fontsource/roboto-mono` (500), Tailwind `font-mono`.
+
 ## 2. Contrast rule (royal blue is a *dark* accent)
 
 - **Foreground on an accent fill = white (`paper`).** White on `#2947c9` ≈ 7.4:1;

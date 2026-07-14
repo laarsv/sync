@@ -3,22 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Burger, Close, Help } from './ui/Icons'
 import IntroModal from './IntroModal'
-
-// Wordmark in royal blue.
-function Wordmark({ className = '' }) {
-  return (
-    <span className={`flex items-center gap-2 min-w-0 ${className}`}>
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-royal shrink-0">
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 10a8 8 0 0 1 13.7-4.5L20 8" />
-          <path d="M20 14a8 8 0 0 1-13.7 4.5L4 16" />
-          <path d="M20 4v4h-4M4 20v-4h4" />
-        </svg>
-      </span>
-      <span className="text-xl font-black tracking-wordmark text-ink">Sync</span>
-    </span>
-  )
-}
+import Wordmark from './Wordmark'
 
 const NAV = [
   { to: '/', label: 'Sync-Paare', end: true },
@@ -64,7 +49,7 @@ export default function Layout({ children }) {
       <header className="bg-paper border-b border-royal/15 sticky top-0 z-40">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <NavLink to="/" className="flex items-center min-w-0">
-            <Wordmark />
+            <Wordmark className="text-xl" />
           </NavLink>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -158,6 +143,21 @@ export default function Layout({ children }) {
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10">{children}</div>
       </main>
+
+      <footer className="border-t border-ink/10">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 flex items-center justify-between gap-3">
+          <a
+            href="https://vrwb.de"
+            target="_blank"
+            rel="noreferrer"
+            className="transition hover:opacity-70"
+            aria-label="vrwb.de"
+          >
+            <Wordmark className="text-base" />
+          </a>
+          <span className="font-mono text-xs text-ink/40">vrwb.de</span>
+        </div>
+      </footer>
 
       {intro && <IntroModal onDismiss={dismissIntro} />}
     </div>

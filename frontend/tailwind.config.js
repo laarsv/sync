@@ -15,9 +15,12 @@ export default {
       },
       fontFamily: {
         sans: ['Roboto', 'system-ui', 'sans-serif'],
+        mono: ['Roboto Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       letterSpacing: {
-        wordmark: '-0.02em',
+        // VRWB CI: Wortmarke −4,5 %, Produkt-Lockup-Toolname −1 %.
+        wordmark: '-0.045em',
+        toolname: '-0.01em',
         tagline: '0.18em',
       },
     },
