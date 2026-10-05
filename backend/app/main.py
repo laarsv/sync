@@ -16,6 +16,10 @@ from .routers import admin, auth, calendar, pairs
 from .services.sync_engine import scheduled_sync
 
 logging.basicConfig(level=logging.INFO)
+# httpx loggt jede Google-API-Anfrage als INFO-Zeile samt Kalender-Adresse. Im Dauerbetrieb sind
+# das tausende Zeilen pro Stunde und personenbezogene Daten im Log. Fehler und Warnungen bleiben.
+for _noisy in ("httpx", "httpcore"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 scheduler: Optional[AsyncIOScheduler] = None
 
