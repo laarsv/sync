@@ -93,12 +93,12 @@ export default function ConnectPage() {
       </div>
 
       {justConnected && status.connected && (
-        <div className="rounded-lg bg-green-50 border-l-4 border-green-500 text-green-900 p-3 text-sm">
+        <div className="rounded-lg bg-pos-tint border-l-4 border-pos text-ink p-3 text-sm">
           Kalender erfolgreich verbunden.
         </div>
       )}
       {error && (
-        <div className="rounded-lg bg-red-50 border-l-4 border-red-500 text-red-900 p-3 text-sm">
+        <div className="rounded-lg bg-neg-tint border-l-4 border-neg text-ink p-3 text-sm">
           {error}
         </div>
       )}
@@ -148,8 +148,8 @@ export default function ConnectPage() {
               <div key={c.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
-                    className="h-3 w-3 rounded-full shrink-0"
-                    style={{ background: c.background_color || '#2947c9' }}
+                    className="h-3 w-3 rounded-full shrink-0 bg-royal"
+                    style={c.background_color ? { background: c.background_color } : undefined}
                   />
                   <span className="truncate text-sm font-medium">{c.summary}</span>
                   {c.primary && <Pill tone="soft">Haupt</Pill>}

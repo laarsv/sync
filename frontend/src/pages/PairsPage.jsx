@@ -355,12 +355,12 @@ export default function PairsPage() {
       </div>
 
       {notice && (
-        <div className="rounded-lg bg-green-50 border-l-4 border-green-500 text-green-900 p-3 text-sm">
+        <div className="rounded-lg bg-pos-tint border-l-4 border-pos text-ink p-3 text-sm">
           {notice}
         </div>
       )}
       {error && (
-        <div className="rounded-lg bg-red-50 border-l-4 border-red-500 text-red-900 p-3 text-sm">
+        <div className="rounded-lg bg-neg-tint border-l-4 border-neg text-ink p-3 text-sm">
           {error}
         </div>
       )}
@@ -413,7 +413,7 @@ export default function PairsPage() {
                   <div className="mt-2 flex items-center gap-2 flex-wrap">
                     {pair.color_id && (
                       <span
-                        className="h-3.5 w-3.5 rounded-full border border-black/10 shrink-0"
+                        className="h-3.5 w-3.5 rounded-full border border-ink/10 shrink-0"
                         style={{ background: colorHex(pair.color_id) }}
                         title="Zielfarbe"
                       />
@@ -437,7 +437,7 @@ export default function PairsPage() {
                     </span>
                   </div>
                   {pair.last_status === 'error' && pair.last_error && (
-                    <div className="mt-2 text-xs text-red-700 bg-red-50 rounded px-2 py-1 break-words">
+                    <div className="mt-2 text-xs text-neg bg-neg-tint rounded px-2 py-1 break-words">
                       {pair.last_error}
                     </div>
                   )}
@@ -457,7 +457,7 @@ export default function PairsPage() {
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
-                      className="p-1.5 rounded-md hover:bg-red-50 text-red-600"
+                      className="p-1.5 rounded-md hover:bg-neg-tint text-neg"
                       onClick={() => remove(pair)}
                       aria-label="Löschen"
                     >
@@ -503,7 +503,7 @@ export default function PairsPage() {
                     </div>
                   </div>
                   {r.error === 'revoked' && (
-                    <div className="mt-1 text-xs text-red-700">
+                    <div className="mt-1 text-xs text-neg">
                       Zugriff widerrufen — bitte neu verbinden.
                     </div>
                   )}
@@ -511,7 +511,7 @@ export default function PairsPage() {
                     <div className="mt-1 text-xs text-ink/50">Nicht verbunden.</div>
                   )}
                   {!r.ok && r.error && !['revoked', 'not_connected'].includes(r.error) && (
-                    <div className="mt-1 text-xs text-red-700 break-words">{r.error}</div>
+                    <div className="mt-1 text-xs text-neg break-words">{r.error}</div>
                   )}
                 </div>
               ))}
@@ -536,7 +536,7 @@ export default function PairsPage() {
       >
         <div className="space-y-4">
           {formError && (
-            <div className="rounded-lg bg-red-50 border-l-4 border-red-500 text-red-900 p-2.5 text-sm">
+            <div className="rounded-lg bg-neg-tint border-l-4 border-neg text-ink p-2.5 text-sm">
               {formError}
             </div>
           )}
@@ -609,7 +609,7 @@ export default function PairsPage() {
                   className={`h-7 w-7 rounded-full ${
                     form.color_id === c.id
                       ? 'ring-2 ring-offset-1 ring-ink'
-                      : 'border border-black/10'
+                      : 'border border-ink/10'
                   }`}
                 />
               ))}

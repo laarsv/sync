@@ -78,7 +78,7 @@ export default function Select({
             text-base bg-paper text-left outline-none transition
             focus:border-royal focus:ring-2 focus:ring-royal/30
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${error ? 'border-red-400' : 'border-ink/20'}`}
+            ${error ? 'border-neg' : 'border-ink/20'}`}
         >
           <span className={`truncate ${selected ? 'text-ink' : 'text-ink/50'}`}>
             {selected ? selected.label : placeholder}
@@ -117,7 +117,7 @@ export default function Select({
         )}
       </div>
       {error ? (
-        <span className="block text-xs text-red-700 mt-1">{error}</span>
+        <span className="block text-xs text-neg mt-1">{error}</span>
       ) : hint ? (
         <span className="block text-xs text-ink/60 mt-1">{hint}</span>
       ) : null}

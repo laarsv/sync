@@ -2,9 +2,9 @@
 const TONES = {
   soft: 'bg-royal/10 text-royal',
   neutral: 'bg-ink/5 text-ink/70',
-  ok: 'bg-green-100 text-green-800',
-  warn: 'bg-yellow-100 text-yellow-800',
-  err: 'bg-red-100 text-red-800',
+  ok: 'bg-pos-tint text-pos',
+  warn: 'bg-warn-tint text-warn',
+  err: 'bg-neg-tint text-neg',
 }
 
 export default function Pill({ tone = 'neutral', children, className = '' }) {

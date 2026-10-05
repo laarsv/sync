@@ -33,7 +33,7 @@ export default function AdminPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 border-l-4 border-red-500 text-red-900 p-3 text-sm">
+        <div className="rounded-lg bg-neg-tint border-l-4 border-neg text-ink p-3 text-sm">
           {error}
         </div>
       )}

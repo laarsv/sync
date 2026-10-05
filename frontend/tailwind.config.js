@@ -12,6 +12,18 @@ export default {
         },
         ink: '#161a24',
         paper: '#ffffff',
+        // VRWB-CI v3 (Suite, theme-v3.css): Arbeitsfläche und Flächen-Stufen.
+        canvas: '#f3f5fa',
+        surface: { 2: '#f7f8fc', 3: '#eef1f8' },
+        // Signalfarben, nur als Soll-Ist-Signal. `tint` = Tönung für Chips und Bänder.
+        pos: { DEFAULT: '#177245', tint: 'rgba(23, 114, 69, .1)' },
+        neg: { DEFAULT: '#c0392b', tint: 'rgba(192, 57, 43, .1)', line: 'rgba(192, 57, 43, .35)' },
+        warn: { DEFAULT: '#9a5900', tint: 'rgba(178, 106, 0, .12)' },
+      },
+      boxShadow: {
+        // VRWB-CI v3: Karten/Kacheln (1) und Dialoge/Popups (2).
+        1: '0 1px 2px rgba(22, 26, 36, .04), 0 6px 18px -10px rgba(22, 26, 36, .12)',
+        2: '0 2px 6px rgba(22, 26, 36, .05), 0 18px 40px -18px rgba(22, 26, 36, .22)',
       },
       fontFamily: {
         sans: ['Roboto', 'system-ui', 'sans-serif'],

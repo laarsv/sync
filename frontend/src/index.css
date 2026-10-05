@@ -32,7 +32,7 @@
   }
   .btn-primary { @apply btn bg-royal text-paper hover:bg-royal/90 shadow-sm; }
   .btn-outline { @apply btn border border-ink/20 bg-paper text-ink hover:bg-ink/5; }
-  .btn-danger  { @apply btn bg-red-600 text-paper hover:bg-red-700 shadow-sm; }
+  .btn-danger  { @apply btn bg-neg text-paper hover:bg-neg/90 shadow-sm; }
   .btn-ghost   { @apply btn text-ink hover:bg-ink/5; }
   .btn-sm      { @apply px-3 py-1.5 text-sm; }
 

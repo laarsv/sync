@@ -57,15 +57,15 @@ export default function IntroModal({ onDismiss }) {
         {/* Header mit Royal-Flaeche (Vordergrund = Weiss) */}
         <div className="relative bg-royal text-paper px-6 pt-6 pb-5 rounded-t-2xl">
           <button
-            className="absolute top-4 right-4 p-1.5 rounded-md hover:bg-white/15 text-paper"
+            className="absolute top-4 right-4 p-1.5 rounded-md hover:bg-paper/15 text-paper"
             onClick={() => onDismiss(dontShow)}
             aria-label="Schließen"
           >
             <Close className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-white/15">
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-paper/15">
+              <svg className="h-6 w-6 text-paper" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 10a8 8 0 0 1 13.7-4.5L20 8" />
                 <path d="M20 14a8 8 0 0 1-13.7 4.5L4 16" />
                 <path d="M20 4v4h-4M4 20v-4h4" />
