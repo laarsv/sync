@@ -11,6 +11,11 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proxy
 
@@ -18,6 +23,11 @@ services:
     build: ./frontend
     container_name: sync-web
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proxy
 
