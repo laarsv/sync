@@ -74,8 +74,8 @@ export default function Select({
           disabled={disabled}
           onClick={() => !disabled && setOpen((o) => !o)}
           onKeyDown={onKeyDown}
-          className={`w-full flex items-center justify-between gap-2 border rounded-lg px-3 py-2.5
-            text-base bg-paper text-left outline-none transition
+          className={`w-full flex items-center justify-between gap-2 border rounded-lg px-3 py-1.5
+            min-h-[44px] sm:min-h-[38px] text-base bg-paper text-left outline-none transition
             focus:border-royal focus:ring-2 focus:ring-royal/30
             disabled:opacity-50 disabled:cursor-not-allowed
             ${error ? 'border-neg' : 'border-ink/20'}`}
