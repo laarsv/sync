@@ -1,19 +1,28 @@
 # Sync — Design system
 
-A small, self-consistent design system in **royal blue**. Roboto, self-hosted
-via `@fontsource/roboto` (no Google Fonts CDN).
+Stand 2026-10-05. sync folgt der **VRWB-CI v3**. Maßgeblich ist `Suite/DESIGN.md`
+(Projekt vrwb_suite, Tokens in `frontend/src/theme-v3.css`): Farben, Typografie,
+Dichte, Dialoge, Zugänglichkeit. Dieses Dokument wiederholt das nicht. Es enthält
+die Zuordnung der CI zum Code von sync, die ausdrücklichen Abweichungen und den
+Marken-Teil (§1b).
 
-## 1. Tokens (`frontend/tailwind.config.js`)
+Neue Oberfläche nutzt die Tokens unten, keine neuen Hex-Werte. Schrift mindestens
+12 px (`text-xs`), Foreground auf Royal-Fläche ist immer Weiß (`paper`).
 
-```js
-colors: {
-  royal: { DEFAULT: '#2947c9', soft: '#aeb9ee' },
-  ink:  '#161a24',
-  paper:'#ffffff',
-}
-```
+## 1. Tokens in Tailwind (`frontend/tailwind.config.js`)
 
-`<meta name="theme-color" content="#2947c9">`.
+| Tailwind | CI-Token | Wert |
+|---|---|---|
+| `royal`, `royal-soft` | `--royal`, `--soft` | `#2947c9`, `#aeb9ee` |
+| `ink` (+ Alpha, z. B. `ink/10`) | `--ink` + Stufen | `#161a24` |
+| `paper` | `--paper` | `#ffffff` |
+| `canvas`, `surface-2`, `surface-3` | `--canvas`, `--surface-2/-3` | `#f3f5fa`, `#f7f8fc`, `#eef1f8` (noch ungenutzt) |
+| `pos`, `neg`, `warn` | `--pos`, `--neg`, `--warn` | `#177245`, `#c0392b`, `#9a5900` |
+| `pos-tint`, `neg-tint`, `warn-tint`, `neg-line` | `--pos-tint` … | Tönungen und Linie aus der CI |
+| `shadow-1`, `shadow-2` | `--shadow-1/-2` | Karten bzw. Dialoge |
+
+Grün, Rot und Gelb nur als Signal (OK, Fehler, Warnung), nie als Dekoration.
+Standard-Tailwind-Farben (`red-600`, `green-100` …) nicht verwenden.
 
 ## 1b. Wortmarke, Produkt-Lockup & Bildmarke — VRWB CI v1.0 (verbindlich)
 
@@ -42,30 +51,41 @@ gewinnt). Konvention:
   Schatten/Verläufe/Outlines.
 - Roboto Mono self-hosted via `@fontsource/roboto-mono` (500), Tailwind `font-mono`.
 
-## 2. Contrast rule (royal blue is a *dark* accent)
+## 2. Bausteine (`frontend/src/index.css`, `components/ui/`)
 
-- **Foreground on an accent fill = white (`paper`).** White on `#2947c9` ≈ 7.4:1;
-  ink on blue ≈ 2.4:1 (fails).
-- **Blue is allowed as a text color** (active nav, eyebrow, links, icons) —
-  blue on white ≈ 7.4:1.
+- `.btn` mit `.btn-primary`, `.btn-outline`, `.btn-danger`, `.btn-ghost`, `.btn-sm`.
+  **Dichte-Norm v2:** `.btn`, `.input` und der `Select`-Trigger sind mobil 44 px,
+  ab `sm:` 38 px hoch (`min-h-[44px] sm:min-h-[38px]`, analog `--control-height`);
+  `.btn-sm` ist 32 px.
+- `.card`, `.input`, `.field-label`, `.eyebrow`.
+- `Select` (eigene Komponente, kein natives `<select>`), `Modal` (Formulare),
+  `ConfirmDialog` (Bestätigungen, `useConfirm()`), `Pill`, `Toggle`, `Icons`
+  (inline SVG, `stroke-2`, `currentColor`, kein Icon-Paket).
+- Keine nativen `alert`/`confirm`/`prompt`. Bestätigungen laufen über `useConfirm()`:
+  natives `<dialog>` mit `showModal()`, `aria-modal`, Titel als `aria-label`, Esc
+  bricht ab, Fokus startet auf „Abbrechen“ und kehrt zum Auslöser zurück,
+  destruktive Aktionen mit `btn-danger`.
+- Kartenlayout mobil, nichts scrollt horizontal.
 
-So: blue buttons/fills use white text, and blue may be used as a text color.
+## 3. Abweichungen von der VRWB-CI
 
-## 3. Building blocks (`frontend/src/index.css`)
-
-- `.btn` + `.btn-primary` (`bg-royal text-paper`), `.btn-outline`, `.btn-danger`,
-  `.btn-ghost`, `.btn-sm`.
-- `.card` = `rounded-2xl border border-ink/10 bg-paper shadow-sm`.
-- `.input`, `.field-label` (`text-xs font-medium text-ink/60`), `.eyebrow`
-  (`text-royal`, uppercase).
-- Focus ring everywhere: `ring-royal/40`.
-
-## 4. Rules
-
-- **No native `<select>`** — use the custom `Select` (`components/ui/Select.jsx`),
-  keyboard-operable.
-- Icons: inline SVG, `stroke-2`, `currentColor` (`components/ui/Icons.jsx`).
-  No icon package.
-- Modals: `role="dialog"`, `aria-modal`, ESC closes (`components/ui/Modal.jsx`).
-- Headings: Roboto **900**, `tracking-tight`; an `.eyebrow` kicker above the H1.
-- Responsive: card layout on mobile; nothing scrolls horizontally.
+- **Hintergrund weiß statt `--canvas`:** sync hat keine Shell mit Arbeitsfläche.
+  Das Token `canvas` ist angelegt, aber nicht in Gebrauch.
+- **Tokens als Tailwind-Farben statt CSS-Variablen.** Ink-Stufen sind Tailwind-Alpha
+  (`ink/60`), nicht `--ink-60`.
+- **Nebentexte in `text-ink/50`** (Platzhalter, „Letzter Lauf“) liegen unter der
+  CI-Grenze für Text (Alpha .62). Offen.
+- **Fokusring** ist `ring-royal/40` (Tailwind-Ring), nicht `outline` mit `--focus-ring` (Royal/70).
+- **Karten** nutzen `shadow-sm` statt `shadow-1`.
+- **Überschriften:** Roboto 900 mit `tracking-tight` (−.01 em) statt −.035 em;
+  `.eyebrow` in `text-xs`, 700, Großbuchstaben mit `tracking-wider` (.05 em) statt .08 em.
+- **Schrift:** Buttons `text-sm` auf allen Breiten (CI: mobil 1 rem), Eingaben `text-base`.
+- **Hinweise** (Erfolg, Fehler) sind Bänder mit 4-px-Balken links in `pos`/`neg`;
+  Erfolg ist grün (`pos-tint`), die CI nutzt dafür Royal-Tint.
+- **`Modal.jsx`, `IntroModal.jsx` und der Menü-Drawer in `Layout.jsx`** sind `div`-Overlays
+  (`role="dialog"`, `aria-modal`; Esc bei Modal und Intro, nicht beim Drawer) mit Ink/60
+  und Blur, ohne `showModal()`, ohne Fokusführung und Fokusrückgabe, `Modal.jsx` ohne
+  `aria-label`. Umstellung auf natives `<dialog>` offen; nur `ConfirmDialog` folgt der CI.
+- **Google-Kalenderfarben** (`EVENT_COLORS` in `PairsPage.jsx`) sind Googles Palette
+  für `colorId`, keine CI-Farben.
+- **Dark Mode:** keiner, wie in der CI.

@@ -33,4 +33,8 @@ Everything is env-driven; base URL, redirect URIs and CORS derive from
 ## Conventions
 - Backend comments are in German; keep new code consistent with the surrounding
   style.
+- UI: no native `alert`/`confirm`/`prompt` — use `useConfirm()`
+  (`frontend/src/components/ui/ConfirmDialog.jsx`). Colors only via the tokens in
+  `frontend/tailwind.config.js` (no new hex values); `DESIGN.md` §3 lists the
+  known deviations from the VRWB CI.
 - Commit messages: concise; describe the change.
