@@ -6,6 +6,7 @@ import Pill from '../components/ui/Pill'
 import Toggle from '../components/ui/Toggle'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import EmptyState from '../components/ui/EmptyState'
 import { Arrow, Lock, Pencil, Plus, Refresh, Trash } from '../components/ui/Icons'
 import { formatDateTime, formatInterval } from '../lib/format'
@@ -50,6 +51,7 @@ function StatusPill({ pair }) {
 }
 
 export default function PairsPage() {
+  const confirm = useConfirm()
   const [pairs, setPairs] = useState(null)
   const [status, setStatus] = useState(null)
   const [pollMinutes, setPollMinutes] = useState(null)
@@ -227,7 +229,13 @@ export default function PairsPage() {
   }
 
   async function remove(pair) {
-    if (!confirm('Paar löschen? Die gespiegelten Ziel-Events werden entfernt.')) return
+    const ok = await confirm({
+      title: 'Paar löschen?',
+      message: 'Die gespiegelten Ziel-Events werden entfernt.',
+      confirmLabel: 'Löschen',
+      danger: true,
+    })
+    if (!ok) return
     try {
       await api.del(`/pairs/${pair.id}`)
       await load()

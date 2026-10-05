@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import Spinner from '../components/ui/Spinner'
 import Pill from '../components/ui/Pill'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Calendar, LinkIcon } from '../components/ui/Icons'
 
 const ROLE_LABEL = {
@@ -13,6 +14,7 @@ const ROLE_LABEL = {
 }
 
 export default function ConnectPage() {
+  const confirm = useConfirm()
   const [params] = useSearchParams()
   const [status, setStatus] = useState(null)
   const [calendars, setCalendars] = useState(null)
@@ -61,7 +63,12 @@ export default function ConnectPage() {
   }
 
   async function disconnect() {
-    if (!confirm('Google-Konto trennen? Bestehende Spiegel-Events bleiben stehen.')) return
+    const ok = await confirm({
+      title: 'Google-Konto trennen?',
+      message: 'Bestehende Spiegel-Events bleiben stehen.',
+      confirmLabel: 'Trennen',
+    })
+    if (!ok) return
     setBusy(true)
     try {
       await api.post('/calendar/disconnect')
