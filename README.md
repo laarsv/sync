@@ -51,6 +51,11 @@ Then open `https://<your-domain>`.
 Point your domain's DNS A-record at the server first, and make sure ports 80
 and 443 are reachable so Caddy can issue the certificate.
 
+> **Note:** the default `docker-compose.yml` ships its own Caddy, which binds
+> host ports 80 and 443. If another reverse proxy already uses those ports on
+> the server, don't start it. Use `docker-compose.prod.yml` instead, see
+> [Behind an existing reverse proxy](#behind-an-existing-reverse-proxy).
+
 ## Google Cloud setup (once)
 
 1. Create/choose a project at <https://console.cloud.google.com>.
@@ -87,11 +92,20 @@ override them only if you need to.
 ## Behind an existing reverse proxy
 
 If you already run a central reverse proxy (e.g. one Caddy for several apps on a
-shared Docker network), use `docker-compose.prod.yml` instead. It publishes no
-ports and joins an external network named `proxy`; route your proxy to the
+shared Docker network), use `docker-compose.prod.yml` instead of the default
+`docker-compose.yml` (its bundled Caddy would collide with your proxy on ports
+80/443):
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+It publishes no ports and joins an external network named `proxy` (create it
+once with `docker network create proxy` if it doesn't exist); route your proxy to the
 `sync-api` (`:8000`) and `sync-web` (`:80`) containers — see
 `Caddyfile.snippet`. In that setup set `APP_BASE_URL`, `DATABASE_URL` and
-`COOKIE_SECURE` in `.env` (see `.env.example`).
+`COOKIE_SECURE` in `.env` (see `.env.example`), and adjust the host path of the
+data volume in `docker-compose.prod.yml` to your layout.
 
 ## Local development
 
